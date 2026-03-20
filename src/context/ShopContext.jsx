@@ -26,7 +26,6 @@ const [cartValue, setCartValue] = useState(() => {
     return [];
   }
 });
-console.log(cartValue)
 // Persist cart
 useEffect(() => {
   localStorage.setItem("cartValue", JSON.stringify(cartValue));

@@ -85,7 +85,6 @@ export function AuthProvider({ children }) {
         setProfile(null);
         setBranch(null);
       } else {
-              console.log(data)
         setProfile(data);
         setBranch(data?.branches ?? null);
       }
