@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
+import { sileo } from "sileo";
+
 export default function AddBranch() {
   const [msg, setMsg] = useState("");
   const [branchData, setBranchData] = useState({
@@ -16,9 +18,15 @@ export default function AddBranch() {
     e.preventDefault();
     setMsg("");
 
-    const {branch_code, branch_name, company_name, branch_email, address, branch_contact_no} = branchData
+    const {
+      branch_code,
+      branch_name,
+      company_name,
+      branch_email,
+      address,
+      branch_contact_no,
+    } = branchData;
 
-    
     const { error } = await supabase.from("branches").insert({
       branch_code: branch_code,
       branch_name: branch_name,
@@ -30,16 +38,31 @@ export default function AddBranch() {
     });
 
     if (error) {
+      sileo.error({
+        title: "ERROR IN SAVING",
+        description: error.message,
+        fill: "#171717",
+        styles: {
+          description: "!text-white",
+        },
+      });
       setMsg(error.message);
       return;
     }
 
-    setMsg("Branch created");
+    // setMsg("Branch created");
+    sileo.success({
+      title: "Successful",
+      description: `${branch_name} successfully added`,
+      fill: "#171717",
+      styles: {
+        description: "!text-white",
+      },
+    });
   }
 
   function handleInput(name, value) {
-    setBranchData((prev) => ({...prev, [name]: value}))
-    console.log(branchData)
+    setBranchData((prev) => ({ ...prev, [name]: value }));
   }
 
   return (
@@ -107,8 +130,6 @@ export default function AddBranch() {
           </button>
         </div>
       </form>
-
-      {msg && <p className="mb-4 text-white">{msg}</p>}
     </>
   );
 }

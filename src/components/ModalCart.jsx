@@ -12,11 +12,11 @@ export default function ModalCart({ propshow, selectedItem }) {
       ...prev,
       {
         uid: uuidv4(),
-        ItemCode: `${item.ItemCode}`,
+        itemcode: `${item.itemcode}`,
         Quantity: quantValue.current.value,
         Discount: discountValue.current.value,
-        ItemName:`${item.ItemName}`,
-        SRP: `${item.Price}`,
+        itemname:`${item.itemname}`,
+        SRP: `${item.price}`,
         Area: `${areaValue.current.value}`,
         Rem: `${noteValue.current.value}`,
       },
@@ -38,9 +38,9 @@ export default function ModalCart({ propshow, selectedItem }) {
 
         <div className="flex flex-col gap-4">
           <div className="flex-1 flex flex-col justify-start gap-2 sm:gap-3">
-            <div className="break-words">{selectedItem.ItemCode}</div>
-            <div className="break-words">{selectedItem.ItemName}</div>
-            <div className="break-words flex flex-row itemsz-center"><PhilippinePeso className="h-4 w-4" />{selectedItem.Price.toLocaleString()}</div>
+            <div className="break-words">{selectedItem.itemcode}</div>
+            <div className="break-words">{selectedItem.itemname}</div>
+            <div className="break-words flex flex-row itemsz-center"><PhilippinePeso className="h-4 w-4" />{selectedItem.price.toLocaleString()}</div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">

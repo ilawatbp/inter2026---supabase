@@ -53,8 +53,6 @@ async function loadQuotation(qno, isPrinting) {
     if(isPrinting){
       setQuoteNum(data.qinfo?.QNO ?? "",)
     }
-
-    console.log(data.items)
     setCartValue(
     (data.items || []).map((item) => ({
         ...item,
