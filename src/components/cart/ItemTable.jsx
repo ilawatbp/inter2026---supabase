@@ -1,7 +1,19 @@
 import { Trash2, Pencil } from "lucide-react";
 import notavail from "../../assets/notavail.webp";
 import { useShop } from "../../context/ShopContext";
+import { supabase } from "../../lib/supabase";
                     // {id_no, quant, discount, price, ItemName, area, note}
+
+  function getItemImageUrl(itemcode) {
+  if (!itemcode) return notavail;
+  
+  const { data } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(`items/${itemcode}.webp`);
+
+  return data?.publicUrl || notavail;
+}
+
 export default function ItemTable({p, openDelModal, calculatePrice}){
 
     const {setCartValue, quoteStatus} = useShop();
@@ -15,13 +27,26 @@ export default function ItemTable({p, openDelModal, calculatePrice}){
          <tr className="border-b border-black align-middle" key={p.uid}>
                       {/* Picture */}
                       <td className="py-2 pr-2 align-middle">
-                        <img
+                        {/* <img
                           // src={notavail}
                           src={`${API_URL}/images/${p.ItemCode}.webp`}
                           onError={(e) => (e.currentTarget.src = notavail)}
                           alt="item"
                           className="w-full h-auto object-contain"
-                        />
+                        /> */}
+
+          
+                          <img
+                            decoding="async"
+                            loading="lazy"
+                            src={getItemImageUrl(p.itemcode)}
+                            alt={p.itemname}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = notavail;
+                            }}
+                            className="w-full h-full object-cover"
+                          />
                       </td>
 
                       {/* Quantity */}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ShoppingBag, PhilippinePeso } from "lucide-react";
 
@@ -9,7 +9,15 @@ import Modal from "../components/Modal"; // the “proper modal” component (po
 import notavail from "../assets/notavail.webp";
 import ModalCart from "../components/ModalCart";
 
-// const API_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.100:3001";
+  function getItemImageUrl(itemcode) {
+  if (!itemcode) return notavail;
+
+  const { data } = supabase.storage
+    .from("product-images")
+    .getPublicUrl(`items/${itemcode}.webp`);
+
+  return data?.publicUrl || notavail;
+}
 
 /** ✅ Card extracted + memoized to reduce re-renders */
 const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
@@ -24,30 +32,20 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
       style={{ contentVisibility: "auto", containIntrinsicSize: "300px 420px" }}
     >
       {/* Fixed height prevents layout shifting while images load */}
-      <div className="bg-[#c8c6c6] rounded-2xl overflow-hidden shadow-md"> {/*add height if you want fix height every card  h-64 */}
+      <div className="bg-[#c8c6c6] rounded-2xl overflow-hidden shadow-md">     
+          <img
+            decoding="async"
+            loading="lazy"
+            src={getItemImageUrl(itm.itemcode)}
+            alt={itm.itemname}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = notavail;
+            }}
+            className="w-full h-full object-cover"
+          />
+        </div>
 
-        {/* <img
-          decoding="async"
-          loading="lazy"
-          src={`${API_URL}/images/${itm.itemcode}.webp`}
-          alt={itm.itemname}
-          onError={(e) => {
-            const img = e.currentTarget;
-
-            // retry once
-            if (!img.dataset.retried) {
-              img.dataset.retried = "1";
-              img.src = `${API_URL}/images/${itm.itemcode}.webp?retry=${Date.now()}`;
-              return;
-            }
-            img.onerror = null;
-            img.src = notavail;
-          }}
-          className="w-full h-full object-cover"
-        /> */}
-
-
-      </div>
 
       <div className="rounded-2xl px-6 flex flex-col gap-1 mb-2">
         <p className="truncate">{itm.itemname}</p>
@@ -182,44 +180,44 @@ useEffect(() => {
       <Modal open={openItemModal} onClose={() => setOpenItemModal(false)}>
         {selectedItem && (
           <div className="flex flex-col items-center gap-3">
-            {/* <img
+            <img
               decoding="async"
               loading="lazy"
-              src={`${API_URL}/images/${selectedItem.itemcode}.webp`}
+              src={getItemImageUrl(selectedItem.itemcode)}
               alt={selectedItem.itemname}
               onError={(e) => {
-                const img = e.currentTarget;
-
-                // retry once
-                if (!img.dataset.retried) {
-                  img.dataset.retried = "1";
-                  img.src = `${API_URL}/images/${selectedItem.itemcode}.webp?retry=${Date.now()}`;
-                  return;
-                }
-                img.onerror = null;
-                img.src = notavail;
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = notavail;
               }}
               className="rounded-2xl max-h-[60vh] object-cover"
-            /> */}
+            />
+
             <div className="w-full px-2">
-              <h4 className="text-xs text-neutral-600">{selectedItem.itemcode}</h4>
+              <h4 className="text-xs text-neutral-600">
+                {selectedItem.itemcode}
+              </h4>
               <p className="text-lg font-semibold">{selectedItem.itemname}</p>
               <div className="mt-10 flex items-center justify-center">
                 <PhilippinePeso className="h-4 w-4" />
                 <p>{selectedItem.price.toLocaleString()}</p>
                 <ShoppingBag
                   className="text-[#3cb54c] cursor-pointer ml-auto h-5 w-5"
-                  onClick={() => { setOpenItemModal(false); handleAddToCart(selectedItem) }}
+                  onClick={() => {
+                    setOpenItemModal(false);
+                    handleAddToCart(selectedItem);
+                  }}
                 />
               </div>
-
             </div>
           </div>
         )}
       </Modal>
 
       <Modal open={openCartModal} onClose={() => setOpenCartModal(false)}>
-        <ModalCart propshow={setOpenCartModal} selectedItem={selectedItem}></ModalCart>
+        <ModalCart
+          propshow={setOpenCartModal}
+          selectedItem={selectedItem}
+        ></ModalCart>
       </Modal>
     </div>
   );
