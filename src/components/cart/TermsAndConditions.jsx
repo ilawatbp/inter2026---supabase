@@ -3,7 +3,7 @@ export default function TermsAndConditions() {
 
     const {handleCustomerDetailsOnchange, quoteDetails, quoteStatus } = useShop();
 
-    const diffInMs = new Date(quoteDetails.qinfo.validUntil) - new Date(quoteDetails.qinfo.Qdate);
+    const diffInMs = new Date(quoteDetails.validUntil) - new Date(quoteDetails.Qdate);
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
   return (
@@ -67,8 +67,8 @@ export default function TermsAndConditions() {
         <div className="grid grid-cols-[190px_1fr] gap-4">
           <div className="font-semibold">5. Delivery Lead Time:</div>
           <input type="text" className={`px-2 h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`} 
-          onChange={(e)=> handleCustomerDetailsOnchange('qinfo', 'leadTime', e.target.value)}
-          defaultValue = {quoteDetails.qinfo?.leadTime}
+          onChange={(e)=> handleCustomerDetailsOnchange('leadTime', e.target.value)}
+          defaultValue = {quoteDetails?.leadTime}
           disabled={quoteStatus ==="locked"}
           />
           
@@ -96,8 +96,8 @@ export default function TermsAndConditions() {
         <div className="grid grid-cols-[190px_1fr] gap-4">
           <div className="font-semibold">8. Warranty:</div>
           <input type="text" className={`px-2 h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`} 
-          onChange={(e)=> handleCustomerDetailsOnchange('qinfo', 'warranty', e.target.value)}
-          defaultValue = {quoteDetails.qinfo?.warranty}
+          onChange={(e)=> handleCustomerDetailsOnchange('warranty', e.target.value)}
+          defaultValue = {quoteDetails?.warranty}
           disabled={quoteStatus ==="locked"}
           />
         </div>

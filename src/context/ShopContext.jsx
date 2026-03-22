@@ -32,7 +32,6 @@ useEffect(() => {
 }, [cartValue]);
 
 const defaultQuoteDetails = {
-  qinfo : {
     Attn: "",
     Desig: "",
     Comp: "",
@@ -47,8 +46,6 @@ const defaultQuoteDetails = {
     warranty: "",
     prepby: "",
     designationOfUser: "",
-  },
-  qn : {
     iduser:"37",
     deptuser: "URP",
     Discount:"Y",
@@ -56,10 +53,31 @@ const defaultQuoteDetails = {
     authDesig: "",
     cliName: "",
     cliDesig: "",
-    ilawBusNameSign: "-",
-    cliBusNameSign:"-"
-  }
 }
+
+// {
+//   "QuotationNo": "Q-2026-000123",
+//   "BranchId": 2,
+//   "CreatedByUserId": 37,
+//   "Attention": "attn",
+//   "Designation": "designation",
+//   "Company": "company",
+//   "Location": "location",
+//   "ProjectName": "project",
+//   "QuotationDate": "2026-03-22",
+//   "ValidUntil": "2026-03-29",
+//   "DeliveryCharge": 123,
+//   "InstallationCharge": 1234,
+//   "LeadTime": "del lead time",
+//   "Warranty": "warranty",
+//   "PreparedBy": "sincerely name",
+//   "PreparedByDesignation": "sincerely designation",
+//   "DiscountMode": "Y",
+//   "AuthorizedByName": "ilaw authorized",
+//   "AuthorizedByDesignation": "ilaw designation authorized",
+//   "ClientAuthorizedName": "client authorized",
+//   "ClientAuthorizedDesignation": "client designation"
+// }
 
 const [quoteDetails, setQuoteDetails] = useState(() => {
   try {
@@ -77,8 +95,8 @@ useEffect(() => {
 }, [quoteDetails]);
 
 // details saves to state when input values for customer detail changes
-function handleCustomerDetailsOnchange(section, field, value) {
-  setQuoteDetails(prev => ({ ...prev, [section]:{...prev[section], [field]: value} }));
+function handleCustomerDetailsOnchange(field, value) {
+  setQuoteDetails(prev => ({...prev, [field]: value}));
 }
 
 

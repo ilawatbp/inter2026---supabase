@@ -35,7 +35,7 @@ export default function CartForm({printRef}) {
         return acc + itemTotal;
     }, 0);
 
-    const grandTotalAmount = totalAmount + Number(quoteDetails.qinfo?.ins_charge) + Number(quoteDetails.qinfo?.del_charge);
+    const grandTotalAmount = totalAmount + Number(quoteDetails?.ins_charge) + Number(quoteDetails?.del_charge);
 
     function handleConfirmDelete() {
         setCartValue(prev => prev.filter(x => x.uid !== pendingDeleteUid))
@@ -90,8 +90,8 @@ export default function CartForm({printRef}) {
                                         name={f.name}
                                         type="text"
                                         className={`flex-1 h-4  outline-none px-1 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-                                        defaultValue={quoteDetails.qinfo?.[f.name] || ""}
-                                        onChange={(e) => handleCustomerDetailsOnchange('qinfo', f.name, e.target.value)}
+                                        defaultValue={quoteDetails?.[f.name] || ""}
+                                        onChange={(e) => handleCustomerDetailsOnchange(f.name, e.target.value)}
                                         disabled={quoteStatus ==="locked"}
                                     />
                                 </div>
@@ -107,9 +107,9 @@ export default function CartForm({printRef}) {
                                     name="from"
                                     type="text"
                                     onChange={(e) => {
-                                        handleCustomerDetailsOnchange("qinfo", "frName", e.target.value);
+                                        handleCustomerDetailsOnchange("frName", e.target.value);
                                     }}
-                                    defaultValue={quoteDetails.qinfo?.frName || ""}
+                                    defaultValue={quoteDetails?.frName || ""}
                                     className={`flex-1 h-4 outline-none px-1 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
                                     disabled={quoteStatus ==="locked"}
                                 />
@@ -135,7 +135,7 @@ export default function CartForm({printRef}) {
                                 <input
                                     name="date"
                                     type="date"
-                                    value={quoteDetails.qinfo.Qdate}
+                                    value={quoteDetails.Qdate}
                                     className="flex-1 h-4 px-1 outline-none bg-white"
                                     disabled
                                 />
@@ -158,16 +158,10 @@ export default function CartForm({printRef}) {
                                     name="validUntil"
                                     type="date"
                                     className={`flex-1 h-4 px-1 outline-none ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-                                    value={quoteDetails.qinfo.validUntil}
+                                    value={quoteDetails.validUntil}
                                     disabled={quoteStatus ==="locked"}
                                         onChange={(e) =>
-                                        setQuoteDetails((prev) => ({
-                                            ...prev,
-                                            qinfo: {
-                                            ...prev.qinfo,
-                                            validUntil: e.target.value,
-                                            },
-                                        }))
+                                        setQuoteDetails((prev) => ({...prev,validUntil: e.target.value}))
                                         }
                                 />
                             </div>
@@ -223,8 +217,8 @@ export default function CartForm({printRef}) {
                         <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
                             <div className="font-semibold">Delivery Charges</div>
                             <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60 px-2 "}`}
-                                onChange={(e) => handleCustomerDetailsOnchange('qinfo', 'del_charge', e.target.value.toString())}
-                                defaultValue={Number(quoteDetails.qinfo?.del_charge)}
+                                onChange={(e) => handleCustomerDetailsOnchange('del_charge', e.target.value.toString())}
+                                defaultValue={Number(quoteDetails?.del_charge)}
                                 disabled={quoteStatus ==="locked"}
                             />
 
@@ -233,8 +227,8 @@ export default function CartForm({printRef}) {
                         <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
                             <div className="font-semibold">Installation Charges</div>
                             <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60 px-2"}`}
-                                onChange={(e) => handleCustomerDetailsOnchange('qinfo', 'ins_charge', e.target.value.toString())}
-                                defaultValue={Number(quoteDetails.qinfo?.ins_charge)}
+                                onChange={(e) => handleCustomerDetailsOnchange('ins_charge', e.target.value.toString())}
+                                defaultValue={Number(quoteDetails?.ins_charge)}
                                 disabled={quoteStatus ==="locked"}
                             />
                         </div>

@@ -13,14 +13,14 @@ export default function SignOff(){
 
   <div className="flex flex-col gap-1" >
     <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-          onChange={(e)=> handleCustomerDetailsOnchange('qinfo', 'prepby', e.target.value)}
-          defaultValue = {quoteDetails.qinfo?.prepby}
+          onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
+          defaultValue = {quoteDetails?.prepby}
           placeholder="Name"
           disabled={quoteStatus ==="locked"}
     />
     <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-          onChange={(e)=> handleCustomerDetailsOnchange('qinfo', 'designationOfUser', e.target.value)}
-          defaultValue = {quoteDetails.qinfo?.designationOfUser}
+          onChange={(e)=> handleCustomerDetailsOnchange('designationOfUser', e.target.value)}
+          defaultValue = {quoteDetails?.designationOfUser}
           placeholder="Designation"
           disabled={quoteStatus ==="locked"}
     />
@@ -64,9 +64,9 @@ export default function SignOff(){
     By signing this quotation, all parties acknowledge and agree to the terms
     and conditions outlined herein. Upon acceptance, this quotation shall
     constitute a binding agreement between{" "}
-    <input type="text" className="inline-block border-b border-black min-w-[120px] px-1 " defaultValue={quoteDetails.qinfo?.Comp}/>
+    <input type="text" className="inline-block border-b border-black min-w-[120px] px-1 " defaultValue={quoteDetails?.Comp}/>
     and{" "}
- <input type="text" className="inline-block border-b border-black min-w-[120px] px-1"  defaultValue={quoteDetails.qinfo?.frName}/>
+ <input type="text" className="inline-block border-b border-black min-w-[120px] px-1"  defaultValue={quoteDetails?.frName}/>
     , subject to the terms specified.
   </p>
 </section>
@@ -80,23 +80,23 @@ export default function SignOff(){
       type="text"
       placeholder="Ilaw Authorized Representative Name"
       className={`w-full px-2 py-1 outline-none h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-        onChange={(e)=> handleCustomerDetailsOnchange('qn', 'authName', e.target.value)}
-        defaultValue = {quoteDetails.qn?.authName}
+        onChange={(e)=> handleCustomerDetailsOnchange('authName', e.target.value)}
+        defaultValue = {quoteDetails?.authName}
         disabled={quoteStatus ==="locked"}
     />
     <input
       type="text"
       placeholder="Designation"
       className={`w-full px-2 py-1 outline-none h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-        onChange={(e)=> handleCustomerDetailsOnchange('qn', 'authDesig', e.target.value)}
-        defaultValue = {quoteDetails.qn?.authDesig}
+        onChange={(e)=> handleCustomerDetailsOnchange('authDesig', e.target.value)}
+        defaultValue = {quoteDetails?.authDesig}
         disabled={quoteStatus ==="locked"}
     />
     <input
       type="text"
       placeholder="ilaw atbp"
       className="w-full px-2 py-1 outline-none h-4 bg-white"
-      defaultValue={quoteDetails.qinfo?.frName}
+      defaultValue={quoteDetails?.frName}
       disabled="true"
     />
   </div>
@@ -107,23 +107,23 @@ export default function SignOff(){
       type="text"
       placeholder="Client Authorized Representative Name"
       className={`w-full px-2 py-1 outline-none h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-        onChange={(e)=> handleCustomerDetailsOnchange('qn', 'cliName', e.target.value)}
-        defaultValue = {quoteDetails.qn?.cliName}
+        onChange={(e)=> handleCustomerDetailsOnchange('cliName', e.target.value)}
+        defaultValue = {quoteDetails?.cliName}
         disabled={quoteStatus ==="locked"}
     />
     <input
       type="text"
       placeholder="Designation"
       className={`w-full px-2 py-1 outline-none h-4 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-        onChange={(e)=> handleCustomerDetailsOnchange('qn', 'cliDesig', e.target.value)}
-        defaultValue = {quoteDetails.qn?.cliDesig}
+        onChange={(e)=> handleCustomerDetailsOnchange('cliDesig', e.target.value)}
+        defaultValue = {quoteDetails?.cliDesig}
         disabled={quoteStatus ==="locked"}
     />
     <input
       type="text"
       placeholder="Business Name"
       className="w-full px-2 py-1 outline-none h-4 bg-white"
-      defaultValue={quoteDetails.qinfo?.Comp}
+      defaultValue={quoteDetails?.Comp}
       disabled="true"
       
     />
