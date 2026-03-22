@@ -6,10 +6,13 @@ import TermsAndConditions from "./TermsAndConditions";
 import { useShop } from "../../context/ShopContext";
 import { useRef, useState } from "react";
 
+import { useAuth } from "../../context/AuthContext";
+
 
 export default function CartForm({printRef}) {
 
     const { cartValue, setCartValue, handleCustomerDetailsOnchange, quoteDetails, setQuoteDetails, quoteNum, quoteStatus } = useShop();
+    const {branch} = useAuth();
     const [pendingDeleteUid, setPendingDeleteUid] = useState(null)
 
     const delItemModal = useRef();
@@ -45,6 +48,7 @@ export default function CartForm({printRef}) {
         setPendingDeleteUid(uid);
     }
 
+    console.log(quoteDetails)
 
     return (
         <>
@@ -56,10 +60,10 @@ export default function CartForm({printRef}) {
                     </div>
                     <div className="flex-1 flex justify-end">
                         <div className="">
-                            <h1 className="text-[#3bb44b] font-bold">ILAW ATBP CORPORATION</h1>
-                            <p className="text-[9px] max-w-64 leading-[1.1]">3rd Floor Alphabase Building, #45 Scout Rallos corner Scout Tuason, Quezon City</p>
-                            <p className="text-[9px] max-w-64 leading-[1.1]">Tel No : (02) 8426-0055/ (02) 8426-0059/ (02) 8426-0062</p>
-                            <p className="text-[9px] max-w-64 leading-[1.1]">Email : ilawatbp.corp@yahoo.com</p>
+                            <h1 className="text-[#3bb44b] font-bold">{branch.company_name}</h1>
+                            <p className="text-[9px] max-w-64 leading-[1.1]">{branch.address}</p>
+                            <p className="text-[9px] max-w-64 leading-[1.1]">Tel No : {branch.branch_contact_no}</p>
+                            <p className="text-[9px] max-w-64 leading-[1.1]">Email : {branch.branch_email}</p>
                             <p className="text-[9px] max-w-64 leading-[1.1]">Website : www.ilawatbp.com</p>
                         </div>
                     </div>

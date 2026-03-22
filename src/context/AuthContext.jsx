@@ -64,19 +64,19 @@ export function AuthProvider({ children }) {
       setProfileLoading(true);
       setError("");
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(`
-          id,
-          email,
-          fullname,
-          role,
-          status,
-          branch_id
-
-        `)
-        .eq("id", session.user.id)
-        .single();
+const { data, error } = await supabase
+  .from("profiles")
+  .select(`
+    id,
+    email,
+    fullname,
+    role,
+    status,
+    branch_id,
+    branches (*)
+  `)
+  .eq("id", session.user.id)
+  .single();
 
       if (!mounted) return;
 
@@ -86,7 +86,7 @@ export function AuthProvider({ children }) {
         setBranch(null);
       } else {
         setProfile(data);
-        setBranch(data?.branches ?? null);
+        setBranch(data?.branches ?? "wala");
       }
 
       setProfileLoading(false);
@@ -111,6 +111,8 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setBranch(null);
   }
+
+  console.log(branch)
 
   return (
     <AuthContext.Provider
