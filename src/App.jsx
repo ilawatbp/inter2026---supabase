@@ -10,8 +10,29 @@ import { Routes, Route } from "react-router-dom";
 import UserOnlyRoute from './routes/UserOnlyRoute';
 import AdminOnlyRoute from './routes/AdminOnlyRoute';
 import RoleHomeRedirect from './routes/RoleHomeRedirect';
+import { useEffect } from 'react';
 
 function App() {
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isPrintShortcut =
+        (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p";
+
+      if (isPrintShortcut) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+
   return (
     <div className='bg-[#f8f8f8] min-h-screen'>
       <Routes>

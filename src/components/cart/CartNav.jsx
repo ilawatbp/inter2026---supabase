@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import Modal from "../Modal";
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import { sileo } from "sileo";
+
+import { supabase } from "../../lib/supabase";
 
 export default function CartNav({ setCartView, cartView, printRef }) {
 
@@ -16,35 +19,115 @@ export default function CartNav({ setCartView, cartView, printRef }) {
 
   const { cartValue, quoteDetails, setCartValue, setQuoteDetails, defaultQuoteDetails, setQuoteNum, quoteStatus, setQuoteStatus } = useShop();
 
-  //POST http://localhost:3001/api/qinfo
+
+  function buildQuotationHeaderPayload({ quoteDetails, userBranchCode, userId }) {
+    const q = quoteDetails ?? {};
+
+    return {
+      p_branch_code: userBranchCode ?? null,
+      p_created_by_user_id: userId ?? null,
+
+      p_quotation_date: q.Qdate,
+      p_valid_until: q.validUntil,
+
+      p_attention: q.Attn || null,
+      p_designation: q.Desig || null,
+      p_company: q.Comp || null,
+      p_location: q.Loc || null,
+      p_project_name: q.Proj || null,
+      p_from_name: q.frName || null,
+      p_subject_line: "Quotation",
+
+      p_delivery_charge: Number(q.del_charge || 0),
+      p_installation_charge: Number(q.ins_charge || 0),
+
+      p_lead_time: q.leadTime || null,
+      p_warranty: q.warranty || null,
+      p_prepared_by: q.prepby || null,
+      p_prepared_by_designation: q.designationOfUser || null,
+      p_discount_mode: q.Discount || null,
+      p_authorized_by_name: q.authName || null,
+      p_authorized_by_designation: q.authDesig || null,
+      p_client_authorized_name: q.cliName || null,
+      p_client_authorized_designation: q.cliDesig || null,
+      p_status: "locked",
+      p_remarks: null,
+    };
+  }
+
+  function buildQuotationItemsPayload({ cartValue, quotationId }) {
+    return cartValue.map((item, index) => ({
+      quotation_id: quotationId,
+      line_no: index + 1,
+
+      item_code: item.itemcode ?? null,
+      item_description: item.itemname ?? null,
+      area: item.Area ?? null,
+      notes: item.Rem ?? null,
+      quantity: Number(item.Quantity ?? 0),
+      unit_price: Number(item.SRP ?? 0),
+      discount_percent: Number(item.Discount ?? 0),
+      line_total: Number(item.LineTotal ?? 0),
+    }));
+  }
 
   async function submitQuote() {
-    const payload = {
-      qn: quoteDetails.qn,       // header auth/client info
-      qinfo: quoteDetails.qinfo, // quote info
-      items: cartValue        // array of items
-    };
+    const userBranchCode = "MUN"; // palitan natin later ng actual logged-in user's branch
+    const userId = 1;
+    const headerPayload = buildQuotationHeaderPayload({
+      quoteDetails,
+      userBranchCode,
+      userId
+    });
 
     try {
-      const res = await fetch("http://192.168.1.100:3001/api/insertQ", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const { data: header, error: headerError } = await supabase.rpc(
+        "create_quotation_header",
+        headerPayload
+      );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Insert failed");
+      if (headerError) {
+        throw new Error(headerError.message || "Failed to save quotation header");
       }
 
-      // ✅ success
-      setQuoteNum(data.QNO);
+      const itemsPayload = buildQuotationItemsPayload({
+        cartValue,
+        quotationId: header.id,
+      });
 
-      // alert(`Saved! QNO: ${data.QNO}`);
+      if (itemsPayload.length > 0) {
+        const { error: itemsError } = await supabase
+          .from("quotation_items")
+          .insert(itemsPayload);
+
+        if (itemsError) {
+          throw new Error(itemsError.message || "Failed to save quotation items");
+        }
+      }
+
+      setQuoteStatus("locked");
+      setOpenSaveModal(false);
+
+      setQuoteNum(header.quotation_no);
+      sileo.success({
+        title: "Saved",
+        description: `${header.quotation_no} successfully added`,
+        fill: "#f3f4f6",
+        styles: {
+          description: "!text-black",
+        },
+      });
+      return header;
+
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      sileo.error({
+        title: "ERROR IN SAVING",
+        description: err.message,
+        fill: "#171717",
+        styles: {
+          description: "!text-white",
+        },
+      });
     }
   }
 
@@ -73,11 +156,11 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   }
 
   function handleSave() {
-    if (cartValue.length == 0){
+    if (cartValue.length == 0) {
       setOpenErrorModal(true);
       setErrorMsg("Please Add Atleast one Item")
       return
-    } 
+    }
 
     for (const item of cartValue) {
       if (item.Quantity == 0) {
@@ -87,7 +170,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
       }
     }
 
-    if (quoteDetails.qinfo.Attn == "" || quoteDetails.qinfo.Comp == ""){
+    if (quoteDetails.Attn == "" || quoteDetails.Comp == "") {
       setOpenErrorModal(true);
       setErrorMsg("Please Complete the Customer Details");
       return;
@@ -97,7 +180,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
     setOpenSaveModal(true);
   }
 
-  
+
 
   const lastSavedQno = "last"
 
@@ -176,11 +259,11 @@ export default function CartNav({ setCartView, cartView, printRef }) {
                 <Save
                   onClick={
                     handleSave
-                    }
+                  }
                   strokeWidth={1.5} />
               </>
             )}
-             {quoteStatus === "locked" && cartView == "form" && (
+            {quoteStatus === "locked" && cartView == "form" && (
               <Printer onClick={handlePrint} strokeWidth={1.5}></Printer>
             )}
 
@@ -199,78 +282,34 @@ export default function CartNav({ setCartView, cartView, printRef }) {
       </Modal>
 
       <Modal open={openSaveModal} onClose={() => setOpenSaveModal(false)}>
-          {/* Title */}
-                    {/* Message */}
-                    <p className="text-center text-gray-600">
-                        Are you sure you want to save this quotation?
-                    </p>
+        {/* Title */}
+        {/* Message */}
+        <p className="text-center text-gray-600">
+          Are you sure you want to save this quotation?
+        </p>
 
-                    {/* Buttons */}
-                    <div className="flex justify-center gap-4 pt-2">
-                        <button
-                            className="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
-                            onClick={()=> setOpenSaveModal(false)}
-                        >
-                            Cancel
-                        </button>
+        {/* Buttons */}
+        <div className="flex justify-center gap-4 pt-2">
+          <button
+            className="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+            onClick={() => setOpenSaveModal(false)}
+          >
+            Cancel
+          </button>
 
-                        <button
-                          className="px-5 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition"
-                          onClick={async () => {
-                            try {
-                              const data = await submitQuote();
-                              setQuoteStatus("locked")
-                              setOpenSaveModal(false);
-                            } catch (err) {
-                              alert(err.message)
-                            }
-
-                          }}
-                        >
-                            Confirm
-                        </button>
-                    </div>
+          <button
+            className="px-5 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition"
+            onClick={() => {
+              submitQuote();
+            }}
+          >
+            Confirm
+          </button>
+        </div>
       </Modal>
       <Modal open={openErrorModal} onClose={() => setOpenErrorModal(false)}>
-            {errorMsg}
+        {errorMsg}
       </Modal>
     </>
   )
 }
-
-
-
-
-
-
-
-// setQuoteDetails
-// {
-//   "qinfo": {
-//     "Attn": "",
-//     "Comp": "",
-//     "Desig": "",
-//     "Loc": "",
-//     "Proj": "",
-//     "Qdate": "",
-//     "del_charge": "0",
-//     "designationOfUser": "",
-//     "frName": "",
-//     "ins_charge": "0",
-//     "leadTime": "",
-//     "prepby": "",
-//     "validUntil": "",
-//     "warranty": ""
-//   },
-//   "qn": {
-//     "Discount": "Y",
-//     "authDesig": "",
-//     "authName": "",
-//     "cliBusNameSign": "-",
-//     "cliDesig": "",
-//     "cliName": "",
-//     "deptuser": "URP",
-//     "iduser": "37",
-//     "ilawBusNameSign": "-"
-//   }
-// }

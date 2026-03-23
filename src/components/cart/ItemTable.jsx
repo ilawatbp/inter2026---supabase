@@ -17,7 +17,6 @@ import { supabase } from "../../lib/supabase";
 export default function ItemTable({p, openDelModal, calculatePrice}){
 
     const {setCartValue, quoteStatus} = useShop();
-      const API_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.100:3001";
 
     function handleChange(uid, field, value ){
       setCartValue(prev => prev.map(x => x.uid === uid ? {...x, [field]: value } : x))
@@ -27,14 +26,6 @@ export default function ItemTable({p, openDelModal, calculatePrice}){
          <tr className="border-b border-black align-middle" key={p.uid}>
                       {/* Picture */}
                       <td className="py-2 pr-2 align-middle">
-                        {/* <img
-                          // src={notavail}
-                          src={`${API_URL}/images/${p.ItemCode}.webp`}
-                          onError={(e) => (e.currentTarget.src = notavail)}
-                          alt="item"
-                          className="w-full h-auto object-contain"
-                        /> */}
-
           
                           <img
                             decoding="async"

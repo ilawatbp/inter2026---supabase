@@ -49,6 +49,7 @@ export default function CartForm({printRef}) {
     }
 
     console.log(quoteDetails)
+    console.log(cartValue)
 
     return (
         <>
