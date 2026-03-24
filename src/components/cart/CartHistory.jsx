@@ -2,82 +2,114 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, SquarePen, Printer } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "../../lib/supabase"; // adjust path if needed
 
-export default function CartHistory({setCartView}) {
+export default function CartHistory({ setCartView }) {
   const [quotations, setQuotations] = useState([]);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const {setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus} = useShop();
-
-async function loadQuotation(qno, isPrinting) {
-  try {
-    const response = await fetch(`http://192.168.1.100:3001/api/quotation/${qno}`);
-
-    if (!response.ok) {
-      throw new Error("Failed to load quotation");
-    }
-
-    const data = await response.json();
-
-    setQuoteDetails({
-      qinfo: {
-        Attn: data.qinfo?.Attn ?? "",
-        Comp: data.qinfo?.Comp ?? "",
-        Desig: data.qinfo?.Desig ?? "",
-        Loc: data.qinfo?.Loc ?? "",
-        Proj: data.qinfo?.Proj ?? data.qinfo?.proj ?? "",
-        Qdate: data.qinfo?.Qdate ?? "",
-        del_charge: data.qinfo?.del_charge ?? "0",
-        designationOfUser: data.qinfo?.designationOfUser ?? "",
-        frName: data.qinfo?.frName ?? "",
-        ins_charge: data.qinfo?.ins_charge ?? "0",
-        leadTime: data.qinfo?.leadTime ?? "",
-        prepby: data.qinfo?.prepby ?? "",
-        validUntil: data.qinfo?.validUntil ?? "",
-        warranty: data.qinfo?.warranty ?? "",
-      },
-      qn: {
-        Discount: data.qn?.Discount ?? "Y",
-        authDesig: data.qn?.authDesig ?? "",
-        authName: data.qn?.authName ?? "",
-        cliBusNameSign: data.qn?.cliBusNameSign ?? "-",
-        cliDesig: data.qn?.cliDesig ?? "",
-        cliName: data.qn?.cliName ?? "",
-        deptuser: data.qn?.deptuser ?? "URP",
-        ilawBusNameSign: data.qn?.ilawBusNameSign ?? "-",
-      },
-    });
-
-    if(isPrinting){
-      setQuoteNum(data.qinfo?.QNO ?? "",)
-    }
-    setCartValue(
-    (data.items || []).map((item) => ({
-        ...item,
-        uid: uuidv4(),
-    }))
-    );
-  } catch (err) {
-    console.error(err);
-  }
-
-}
+  const { setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus } = useShop();
 
   const itemsPerPage = 100;
+
+  async function loadQuotation(quotationNo, isPrinting = false) {
+    try {
+      setError("");
+
+      // 1) Load header
+      const { data: header, error: headerError } = await supabase
+        .from("quotation_headers")
+        .select("*")
+        .eq("quotation_no", quotationNo)
+        .single();
+
+      if (headerError) {
+        throw new Error(headerError.message || "Failed to load quotation header");
+      }
+
+      // 2) Load items
+      const { data: items, error: itemsError } = await supabase
+        .from("quotation_items")
+        .select("*")
+        .eq("quotation_id", header.id)
+        .order("line_no", { ascending: true });
+
+      if (itemsError) {
+        throw new Error(itemsError.message || "Failed to load quotation items");
+      }
+
+      setQuoteDetails({
+        Attn: header.attention ?? "",
+        Desig: header.designation ?? "",
+        Comp: header.company ?? "",
+        Loc: header.location ?? "",
+        Proj: header.project_name ?? "",
+        frName: header.from_name ?? "",
+        Qdate: header.quotation_date ?? "",
+        validUntil: header.valid_until ?? "",
+        ins_charge: header.installation_charge ?? "0",
+        del_charge: header.delivery_charge ?? "0",
+        leadTime: header.lead_time ?? "",
+        warranty: header.warranty ?? "",
+        prepby: header.prepared_by ?? "",
+        designationOfUser: header.prepared_by_designation ?? "",
+        Discount: header.discount_mode ?? "Y",
+        authName: header.authorized_by_name ?? "",
+        authDesig: header.authorized_by_designation ?? "",
+        cliName: header.client_authorized_name ?? "",
+        cliDesig: header.client_authorized_designation ?? "",
+      });
+
+      if (isPrinting) {
+        setQuoteNum(header.quotation_no ?? "");
+      }
+
+      setCartValue(
+        (items || []).map((item) => ({
+          uid: uuidv4(),
+          itemCode: item.item_code ?? "",
+          description: item.item_description ?? "",
+          area: item.area ?? "",
+          notes: item.notes ?? "",
+          qty: Number(item.quantity ?? 0),
+          unitPrice: Number(item.unit_price ?? 0),
+          discountPercent: Number(item.discount_percent ?? 0),
+          total: Number(item.line_total ?? 0),
+        }))
+      );
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to load quotation");
+      alert(err.message || "Failed to load quotation");
+    }
+  }
 
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch("http://192.168.1.100:3001/api/qinfo");
-        if (!response.ok) {
-          throw new Error("Error in API");
+        setError("");
+
+        const { data, error } = await supabase
+          .from("quotation_headers")
+          .select(`
+            id,
+            quotation_no,
+            attention,
+            prepared_by,
+            quotation_date,
+            created_at
+          `)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          throw new Error(error.message || "Error loading quotation history");
         }
 
-        const data = await response.json();
-        setQuotations(data);
+        setQuotations(data || []);
       } catch (err) {
+        console.error(err);
         setError(err.message);
         alert(err.message);
       }
@@ -94,11 +126,12 @@ async function loadQuotation(qno, isPrinting) {
   }
 
   const filteredQuotations = useMemo(() => {
+    const query = search.toLowerCase();
+
     return quotations.filter((q) => {
-      const qno = String(q.QNO ?? "").toLowerCase();
-      const attn = String(q.Attn ?? "").toLowerCase();
-      const prepby = String(q.prepby ?? "").toLowerCase();
-      const query = search.toLowerCase();
+      const qno = String(q.quotation_no ?? "").toLowerCase();
+      const attn = String(q.attention ?? "").toLowerCase();
+      const prepby = String(q.prepared_by ?? "").toLowerCase();
 
       return (
         qno.includes(query) ||
@@ -172,24 +205,32 @@ async function loadQuotation(qno, isPrinting) {
               paginatedQuotations.map((q) => {
                 return (
                   <tr
-                    key={(uuidv4())}
+                    key={q.id}
                     className="h-16 border-b border-b-gray-300"
                   >
-                    <td>{q.QNO}</td>
-                    <td>{q.Attn || "-"}</td>
-                    <td>{q.prepby || "-"}</td>
-                    <td>{formatDate(q.Qdate)}</td>
+                    <td>{q.quotation_no}</td>
+                    <td>{q.attention || "-"}</td>
+                    <td>{q.prepared_by || "-"}</td>
+                    <td>{formatDate(q.quotation_date)}</td>
                     <td>
                       <div className="flex flex-row justify-end gap-2">
                         <SquarePen
                           strokeWidth={1}
                           className="hover:text-[#3cb54c] cursor-pointer hover:scale-125 h-4 w-4"
-                          onClick={() => {loadQuotation(q.QNO); setCartView("form");}}
+                          onClick={async () => {
+                            await loadQuotation(q.quotation_no, false);
+                            setQuoteStatus("draft");
+                            setCartView("form");
+                          }}
                         />
                         <Printer
                           strokeWidth={1}
                           className="hover:text-[#3cb54c] cursor-pointer hover:scale-125 h-4 w-4"
-                          onClick={() => {loadQuotation(q.QNO, true); setCartView("form"); setQuoteStatus("locked");}}
+                          onClick={async () => {
+                            await loadQuotation(q.quotation_no, true);
+                            setQuoteStatus("locked");
+                            setCartView("form");
+                          }}
                         />
                       </div>
                     </td>

@@ -112,8 +112,6 @@ const { data, error } = await supabase
     setBranch(null);
   }
 
-  console.log(branch)
-
   return (
     <AuthContext.Provider
       value={{

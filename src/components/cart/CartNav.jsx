@@ -20,12 +20,10 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   const { cartValue, quoteDetails, setCartValue, setQuoteDetails, defaultQuoteDetails, setQuoteNum, quoteStatus, setQuoteStatus } = useShop();
 
 
-  function buildQuotationHeaderPayload({ quoteDetails, userBranchCode, userId }) {
+  function buildQuotationHeaderPayload({ quoteDetails}) {
     const q = quoteDetails ?? {};
 
     return {
-      p_branch_code: userBranchCode ?? null,
-      p_created_by_user_id: userId ?? null,
 
       p_quotation_date: q.Qdate,
       p_valid_until: q.validUntil,
@@ -76,13 +74,12 @@ export default function CartNav({ setCartView, cartView, printRef }) {
     const userId = 1;
     const headerPayload = buildQuotationHeaderPayload({
       quoteDetails,
-      userBranchCode,
-      userId
     });
 
     try {
       const { data: header, error: headerError } = await supabase.rpc(
-        "create_quotation_header",
+        // "create_quotation_header",
+        "create_quotation_header_for_current_user",
         headerPayload
       );
 

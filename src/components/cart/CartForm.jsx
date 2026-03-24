@@ -48,9 +48,6 @@ export default function CartForm({printRef}) {
         setPendingDeleteUid(uid);
     }
 
-    console.log(quoteDetails)
-    console.log(cartValue)
-
     return (
         <>
             <main ref={printRef} className="max-w-[8.5in] mx-auto bg-white p-10 rounded-xl">
