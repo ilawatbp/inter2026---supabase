@@ -69,14 +69,13 @@ export default function CartHistory({ setCartView }) {
       setCartValue(
         (items || []).map((item) => ({
           uid: uuidv4(),
-          itemCode: item.item_code ?? "",
-          description: item.item_description ?? "",
-          area: item.area ?? "",
-          notes: item.notes ?? "",
-          qty: Number(item.quantity ?? 0),
-          unitPrice: Number(item.unit_price ?? 0),
-          discountPercent: Number(item.discount_percent ?? 0),
-          total: Number(item.line_total ?? 0),
+          itemcode: item.item_code ?? "",
+          itemname: item.item_description ?? "",
+          Area: item.area ?? "",
+          Rem: item.notes ?? "",
+          Quantity: Number(item.quantity ?? 0),
+          SRP: Number(item.unit_price ?? 0),
+          Discount: Number(item.discount_percent ?? 0)
         }))
       );
     } catch (err) {

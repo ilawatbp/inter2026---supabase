@@ -13,14 +13,16 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   const navigate = useNavigate();
   const [openDiscountModal, setOpenDiscountModal] = useState();
   const [openSaveModal, setOpenSaveModal] = useState();
+  const [openClearModal, setOpenClearModal] = useState();
   const [openErrorModal, setOpenErrorModal] = useState();
   const [errorMsg, setErrorMsg] = useState();
   const discountValue = useRef();
 
   const { cartValue, quoteDetails, setCartValue, setQuoteDetails, defaultQuoteDetails, setQuoteNum, quoteStatus, setQuoteStatus } = useShop();
 
+  const [isSaving, setIsSaving] = useState(false);
 
-  function buildQuotationHeaderPayload({ quoteDetails}) {
+  function buildQuotationHeaderPayload({ quoteDetails }) {
     const q = quoteDetails ?? {};
 
     return {
@@ -223,21 +225,23 @@ export default function CartNav({ setCartView, cartView, printRef }) {
                   navigate(`/`);
                 }
               }}
-              strokeWidth={1.5} className="hover:text-green-500 scale-110 " />
+              strokeWidth={1.5} className="hover:text-green-400 transition-colors duration-300 ease-in-out cursor-pointer" />
 
             {quoteStatus !== "locked" && (
               <>
-                <button type="button" className="rounded-full px-4 py-2 hover:bg-green-500 transition">
+                {/* <button type="button" className="rounded-full px-4 py-2 hover:bg-green-500 transition">
                   Service Form
-                </button>
+                </button> */}
 
-                <button type="button" className="rounded-full px-4 py-2 hover:bg-green-500 transition"
+                <button type="button" 
+                // className="rounded-full px-4 py-2 hover:bg-green-500 transition"
+                className="rounded-full px-4 py-2 hover:text-green-300 transition"
                   onClick={() => setCartView(cartView === "form" ? "history" : "form")}
                 >
                   {cartView == "form" ? "Quotation History" : "Quotation Form"}
                 </button>
                 {cartView == "form" && (
-                  <button type="button" className="rounded-full px-4 py-2 hover:bg-green-500 transition"
+                  <button type="button" className="rounded-full px-4 py-2 hover:text-green-400 transition"
                     onClick={handleOpenDiscout}
                   >
                     Discount All
@@ -252,12 +256,8 @@ export default function CartNav({ setCartView, cartView, printRef }) {
             {/* RIGHT */}
             {quoteStatus !== "locked" && cartView == "form" && (
               <>
-                <BrushCleaning onClick={clearAll} strokeWidth={1.5} />
-                <Save
-                  onClick={
-                    handleSave
-                  }
-                  strokeWidth={1.5} />
+                <BrushCleaning onClick={() => setOpenClearModal(true)} strokeWidth={1.5} className="hover:text-red-300 transition-colors duration-300 ease-in-out cursor-pointer"/>
+                <Save onClick={handleSave} strokeWidth={1.5}  className="hover:text-green-400 transition-colors duration-300 ease-in-out cursor-pointer" />
               </>
             )}
             {quoteStatus === "locked" && cartView == "form" && (
@@ -295,15 +295,44 @@ export default function CartNav({ setCartView, cartView, printRef }) {
           </button>
 
           <button
-            className="px-5 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition"
+            className={`px-5 py-2 rounded-xl  text-white hover:bg-green-600 transition 
+                        ${isSaving ? 'bg-green-300' : 'bg-green-500'}
+                      `}
             onClick={() => {
               submitQuote();
+              setIsSaving(true)
             }}
+            disabled={isSaving}
           >
             Confirm
           </button>
         </div>
       </Modal>
+
+      <Modal open={openClearModal} onClose={() => setOpenClearModal(false)}>
+
+        <p className="text-center text-gray-600">
+          Are you sure you want to clear this quotation?
+        </p>
+
+        {/* Buttons */}
+        <div className="flex justify-center gap-4 pt-2">
+          <button
+            className="px-5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+            onClick={() => setOpenClearModal(false)}
+          >
+            Cancel
+          </button>
+
+          <button
+            className={`px-5 py-2 rounded-xl  text-white hover:bg-red-600 bg-red-500 transition `}
+            onClick={() => { clearAll() }}
+          >
+            Confirm
+          </button>
+        </div>
+      </Modal>
+
       <Modal open={openErrorModal} onClose={() => setOpenErrorModal(false)}>
         {errorMsg}
       </Modal>
