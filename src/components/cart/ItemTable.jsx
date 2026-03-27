@@ -54,7 +54,7 @@ export default function ItemTable({p, openDelModal, calculatePrice}){
                       <td className="py-2">
                         <div className="font-semibold">{p.id_no}</div>
                         <div className="mt-2">
-                          {p.ItemName}
+                          {p.itemname}
                         </div>
                         <div className="mt-2">Area:  
                           <input type="text" className={`w-full px-2 bg-white ${quoteStatus !=="locked" && "border-b"}`} 

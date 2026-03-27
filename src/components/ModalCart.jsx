@@ -62,7 +62,7 @@ export default function ModalCart({ propshow, selectedItem }) {
               type="number" min="0" max="100"
               className="h-10 w-full sm:w-1/2 rounded-2xl px-4 shadow-md bg-white border border-[#dfdfdf]"
               ref={discountValue}
-              defaultValue={0}
+              defaultValue={selectedItem.promo?.pm_discval || 0}
             />
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">

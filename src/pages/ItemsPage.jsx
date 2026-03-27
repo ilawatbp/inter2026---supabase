@@ -49,15 +49,16 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
 
       <div className="rounded-2xl px-6 flex flex-col gap-1 mb-2">
         <p className="truncate">{itm.itemname}</p>
-
         <div className="flex items-center gap-1">
+        {/* <p >{itm.promo?.pm_discval}</p> */}
           <PhilippinePeso className="h-3 w-3" />
           <p>{itm.price.toLocaleString()}</p>
         </div>
         <div
-          className="flex justify-end items-center"
+          className="flex justify-between items-center"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className={`h-1 w-1 rounded-full ${itm.promo?.pm_discval && "bg-green-300"}`}></div>
           <ShoppingBag
             className="text-[#3cb54c] cursor-pointer h-5 w-5 "
             onClick={() => onAddToCart(itm)}
@@ -95,13 +96,24 @@ useEffect(() => {
       return;
     }
 
-    let dbQuery = supabase
-      .from("items")
-      .select(`
+        let dbQuery = supabase
+          .from("items")
+          .select(`
         itemcode,
         itemname,
-        price
-        `);
+        price,
+         promo:promo_discount (
+          pm_discval
+        )
+      `);
+
+    // let dbQuery = supabase
+    //   .from("items")
+    //   .select(`
+    //     itemcode,
+    //     itemname,
+    //     price
+    //     `);
         // other field you can get
         // itmsgrpcod,
         // u_item_classification,

@@ -1,37 +1,26 @@
-import { createContext, useContext, useState, useEffect} from "react"; 
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useAuth } from "./AuthContext";
+
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
+  const { profile } = useAuth();
 
-const [view, setView] = useState("");
+  const [view, setView] = useState("");
+  const [quoteNum, setQuoteNum] = useState("-");
+  const [quoteStatus, setQuoteStatus] = useState("draft");
+  const [cartValue, setCartValue] = useState([]);
+  const [quoteDetails, setQuoteDetails] = useState(null);
 
-const [quoteNum, setQuoteNum] = useState("-");
+  const cartStorageKey = profile?.id ? `cartValue_${profile.id}` : null;
+  const quoteStorageKey = profile?.id ? `quoteDetails_${profile.id}` : null;
 
-const [quoteStatus, setQuoteStatus] = useState("draft");
-
-    const todaysDate = new Date(Date.now() + 0 * 24 * 60 * 60 * 1000)
+  const todaysDate = new Date().toISOString().split("T")[0];
+  const validUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
 
-
-    const validUntil = new Date((Date.now() + 7 * 24 * 60 * 60 * 1000))
-    .toISOString()
-    .split("T")[0];
-
-
-const [cartValue, setCartValue] = useState(() => {
-  try {
-    return JSON.parse(localStorage.getItem("cartValue")) || [];
-  } catch {
-    return [];
-  }
-});
-// Persist cart
-useEffect(() => {
-  localStorage.setItem("cartValue", JSON.stringify(cartValue));
-}, [cartValue]);
-
-const defaultQuoteDetails = {
+  const defaultQuoteDetails = useMemo(() => ({
     Attn: "",
     Desig: "",
     Comp: "",
@@ -46,65 +35,82 @@ const defaultQuoteDetails = {
     warranty: "",
     prepby: "",
     designationOfUser: "",
-    iduser:"37",
-    deptuser: "URP",
-    Discount:"Y",
+    iduser: profile?.id || "",
+    deptuser: profile?.department || "",
+    Discount: "Y",
     authName: "",
     authDesig: "",
     cliName: "",
     cliDesig: "",
-}
+  }), [todaysDate, validUntil, profile]);
 
-// {
-//   "QuotationNo": "Q-2026-000123",
-//   "BranchId": 2,
-//   "CreatedByUserId": 37,
-//   "Attention": "attn",
-//   "Designation": "designation",
-//   "Company": "company",
-//   "Location": "location",
-//   "ProjectName": "project",
-//   "QuotationDate": "2026-03-22",
-//   "ValidUntil": "2026-03-29",
-//   "DeliveryCharge": 123,
-//   "InstallationCharge": 1234,
-//   "LeadTime": "del lead time",
-//   "Warranty": "warranty",
-//   "PreparedBy": "sincerely name",
-//   "PreparedByDesignation": "sincerely designation",
-//   "DiscountMode": "Y",
-//   "AuthorizedByName": "ilaw authorized",
-//   "AuthorizedByDesignation": "ilaw designation authorized",
-//   "ClientAuthorizedName": "client authorized",
-//   "ClientAuthorizedDesignation": "client designation"
-// }
+  // Load cart per logged-in user
+  useEffect(() => {
+    if (!cartStorageKey) {
+      setCartValue([]);
+      return;
+    }
 
-const [quoteDetails, setQuoteDetails] = useState(() => {
-  try {
-    const stored = localStorage.getItem("quoteDetails");
-    return stored ? JSON.parse(stored) : defaultQuoteDetails;
-  } catch {
-    return defaultQuoteDetails;
+    try {
+      const storedCart = localStorage.getItem(cartStorageKey);
+      setCartValue(storedCart ? JSON.parse(storedCart) : []);
+    } catch {
+      setCartValue([]);
+    }
+  }, [cartStorageKey]);
+
+  // Save cart per logged-in user
+  useEffect(() => {
+    if (!cartStorageKey) return;
+    localStorage.setItem(cartStorageKey, JSON.stringify(cartValue));
+  }, [cartValue, cartStorageKey]);
+
+  // Load quote details per logged-in user
+  useEffect(() => {
+    if (!quoteStorageKey) {
+      setQuoteDetails(defaultQuoteDetails);
+      return;
+    }
+
+    try {
+      const storedQuote = localStorage.getItem(quoteStorageKey);
+      setQuoteDetails(storedQuote ? JSON.parse(storedQuote) : defaultQuoteDetails);
+    } catch {
+      setQuoteDetails(defaultQuoteDetails);
+    }
+  }, [quoteStorageKey, defaultQuoteDetails]);
+
+  // Save quote details per logged-in user
+  useEffect(() => {
+    if (!quoteStorageKey || !quoteDetails) return;
+    localStorage.setItem(quoteStorageKey, JSON.stringify(quoteDetails));
+  }, [quoteDetails, quoteStorageKey]);
+
+  function handleCustomerDetailsOnchange(field, value) {
+    setQuoteDetails(prev => ({ ...prev, [field]: value }));
   }
-});
 
-
-// Persist quote details
-useEffect(() => {
-  localStorage.setItem("quoteDetails", JSON.stringify(quoteDetails));
-}, [quoteDetails]);
-
-// details saves to state when input values for customer detail changes
-function handleCustomerDetailsOnchange(field, value) {
-  setQuoteDetails(prev => ({...prev, [field]: value}));
+  return (
+    <ShopContext.Provider
+      value={{
+        view,
+        setView,
+        defaultQuoteDetails,
+        cartValue,
+        setCartValue,
+        quoteDetails,
+        setQuoteDetails,
+        handleCustomerDetailsOnchange,
+        quoteNum,
+        setQuoteNum,
+        quoteStatus,
+        setQuoteStatus,
+      }}
+    >
+      {children}
+    </ShopContext.Provider>
+  );
 }
-
-
-return (
-  <ShopContext.Provider value={{view, setView, defaultQuoteDetails, cartValue, setCartValue,quoteDetails, setQuoteDetails, handleCustomerDetailsOnchange, quoteNum, setQuoteNum, quoteStatus, setQuoteStatus}}>{children}</ShopContext.Provider>
-);
-}
-
 
 export function useShop() {
   const ctx = useContext(ShopContext);
