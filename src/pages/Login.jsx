@@ -42,12 +42,12 @@ export default function Login() {
 
   return (
     <div className="min-h-dvh w-full flex justify-center items-center flex-col">
-      <img src={lamp} alt="" className="fixed z-0 w-[250px] right-10 top-20"/>
-      <div className="w-full bg-black z-20 px-10 h-24 mb-auto flex items-center"> 
+      <img src={lamp} alt="" className="fixed z-0 w-[250px] right-10 top-0"/>
+      <div className="w-full z-20 px-10 h-24 mb-auto flex items-center"> 
         <img src={logo} alt="ilaw atbp" className="w-[150px]" />
       </div>
       <div className="w-1/3 h-[600px] flex flex-col">
-        <h1 className="mb-20 text-4xl font-bold">log in</h1>
+        <h1 className="mb-10 text-4xl font-bold">log in</h1>
 
         <form onSubmit={handleSubmit} className=" border border-black rounded-3xl flex-1 px-8 py-10 flex flex-col justify-start items-center gap-4">
             <p className="mr-auto">Interactive</p>

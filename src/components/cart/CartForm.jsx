@@ -154,8 +154,10 @@ export default function CartForm({ printRef }) {
                                         handleCustomerDetailsOnchange("frName", e.target.value);
                                     }}
                                     defaultValue={quoteDetails?.frName || ""}
-                                    className={`flex-1 h-4 outline-none px-1 ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60"}`}
-                                    disabled={quoteStatus === "locked"}
+                                    className={`flex-1 h-4 outline-none px-1 
+                                        bg-white
+                                        `}
+                                    disabled="true"
                                 />
                             </div>
 

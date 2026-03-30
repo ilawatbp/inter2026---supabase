@@ -40,27 +40,49 @@ export default function CartHistory({ setCartView }) {
         throw new Error(itemsError.message || "Failed to load quotation items");
       }
 
-      setQuoteDetails({
-        Attn: header.attention ?? "",
+
+      setQuoteDetails((prev) => ({...prev,  Attn: header.attention ?? "",
         Desig: header.designation ?? "",
         Comp: header.company ?? "",
         Loc: header.location ?? "",
         Proj: header.project_name ?? "",
-        frName: header.from_name ?? "",
         Qdate: header.quotation_date ?? "",
         validUntil: header.valid_until ?? "",
         ins_charge: header.installation_charge ?? "0",
         del_charge: header.delivery_charge ?? "0",
         leadTime: header.lead_time ?? "",
         warranty: header.warranty ?? "",
-        prepby: header.prepared_by ?? "",
-        designationOfUser: header.prepared_by_designation ?? "",
         Discount: header.discount_mode ?? "Y",
         authName: header.authorized_by_name ?? "",
         authDesig: header.authorized_by_designation ?? "",
         cliName: header.client_authorized_name ?? "",
         cliDesig: header.client_authorized_designation ?? "",
-      });
+        prepby: isPrinting ? header.prepared_by ?? "" : prev.prepby,
+        designationOfUser: isPrinting ? header.prepared_by_designation ?? "" : prev.designationOfUser,
+        frName: isPrinting ? header.from_name ?? "" : prev.frName,
+      }));
+
+      // setQuoteDetails({
+      //   Attn: header.attention ?? "",
+      //   Desig: header.designation ?? "",
+      //   Comp: header.company ?? "",
+      //   Loc: header.location ?? "",
+      //   Proj: header.project_name ?? "",
+      //   Qdate: header.quotation_date ?? "",
+      //   validUntil: header.valid_until ?? "",
+      //   ins_charge: header.installation_charge ?? "0",
+      //   del_charge: header.delivery_charge ?? "0",
+      //   leadTime: header.lead_time ?? "",
+      //   warranty: header.warranty ?? "",
+      //   Discount: header.discount_mode ?? "Y",
+      //   authName: header.authorized_by_name ?? "",
+      //   authDesig: header.authorized_by_designation ?? "",
+      //   cliName: header.client_authorized_name ?? "",
+      //   cliDesig: header.client_authorized_designation ?? "",
+      //   // prepby: header.prepared_by ?? "",
+      //   // designationOfUser: header.prepared_by_designation ?? "",
+      //   // frName: header.from_name ?? "",
+      // });
 
       if (isPrinting) {
         setQuoteNum(header.quotation_no ?? "");

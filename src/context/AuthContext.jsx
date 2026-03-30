@@ -72,6 +72,7 @@ const { data, error } = await supabase
     fullname,
     role,
     status,
+    designation,
     branch_id,
     branches (*)
   `)

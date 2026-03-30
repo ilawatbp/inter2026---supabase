@@ -9,6 +9,8 @@ import Modal from "../components/Modal"; // the “proper modal” component (po
 import notavail from "../assets/notavail.webp";
 import ModalCart from "../components/ModalCart";
 
+import SkelitonCard from "../components/SkelitonCard";
+
 function getItemImageUrl(itemcode) {
   if (!itemcode) return notavail;
 
@@ -82,46 +84,34 @@ export default function ItemsPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openItemModal, setOpenItemModal] = useState(false);
   const [openCartModal, setOpenCartModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
 
   useEffect(() => {
     let ignore = false;
+    let timeoutId;
 
     async function loadItems() {
       setError("");
+      setIsLoading(true);
 
-      // if you want no request when both are empty
       if (!query && !groupQuery) {
         setItems([]);
+        setIsLoading(false);
         return;
       }
 
       let dbQuery = supabase
         .from("items")
         .select(`
-    itemcode,
-    itemname,
-    price,
-    promo:promo_discount (
-      pm_discval
-    )
-  `)
+        itemcode,
+        itemname,
+        price,
+        promo:promo_discount (
+          pm_discval
+        )
+      `)
         .order("price", { ascending: false });
-
-      // let dbQuery = supabase
-      //   .from("items")
-      //   .select(`
-      //     itemcode,
-      //     itemname,
-      //     price
-      //     `);
-      // other field you can get
-      // itmsgrpcod,
-      // u_item_classification,
-      // u_interactive,
-      // pricelist,
-      // activeqrygroup,
-      // synced_at
 
       if (query) {
         dbQuery = dbQuery.or(
@@ -142,16 +132,21 @@ export default function ItemsPage() {
       if (error) {
         setError(error.message);
         setItems([]);
+        setIsLoading(false);
         return;
       }
 
       setItems(data || []);
+      timeoutId = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
 
     loadItems();
 
     return () => {
       ignore = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [query, groupQuery]);
 
@@ -172,66 +167,79 @@ export default function ItemsPage() {
 
 
   return (
-    <div className="h-dvh w-full overflow-hidden flex flex-col">
-      <Header />
-
-      {/* ✅ Only the list scrolls (header stays stable) */}
-      <div className="flex-1 overflow-auto scrollbar-hide">
-        <div className="w-full px-20 py-4 pt-36 flex gap-4 flex-wrap justify-evenly">
-          {items.map((itm) => (
-            <ItemCard
-              key={itm.itemcode}
-              itm={itm}
-              onOpen={handleOpen}
-              onAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
+    <>
+      <div className={`fixed w-full h-screen bg-white
+                        transition-all duration-300 ease-out
+                      ${isLoading ? 'opacity-100 z-50' : 'opacity-0 z-0'}`}>
+        <SkelitonCard />
       </div>
+      <div className="h-dvh w-full overflow-hidden flex flex-col">
+        <Header />
 
-      {/* ✅ Modal is mounted ONLY when open (no invisible overlay blocking scroll) */}
-      <Modal open={openItemModal} onClose={() => setOpenItemModal(false)}>
-        {selectedItem && (
-          <div className="flex flex-col items-center gap-3">
-            <img
-              decoding="async"
-              loading="lazy"
-              src={getItemImageUrl(selectedItem.itemcode)}
-              alt={selectedItem.itemname}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = notavail;
-              }}
-              className="rounded-2xl max-h-[60vh] object-cover"
-            />
-
-            <div className="w-full px-2">
-              <h4 className="text-xs text-neutral-600">
-                {selectedItem.itemcode}
-              </h4>
-              <p className="text-lg font-semibold">{selectedItem.itemname}</p>
-              <div className="mt-10 flex items-center justify-center">
-                <PhilippinePeso className="h-4 w-4" />
-                <p>{selectedItem.price.toLocaleString()}</p>
-                <ShoppingBag
-                  className="text-[#3cb54c] cursor-pointer ml-auto h-5 w-5"
-                  onClick={() => {
-                    setOpenItemModal(false);
-                    handleAddToCart(selectedItem);
-                  }}
+        {/* ✅ Only the list scrolls (header stays stable) */}
+        <div className="flex-1 overflow-auto scrollbar-hide z-10">
+          <div className="w-full px-20 py-4 pt-36 flex gap-4 flex-wrap justify-evenly">
+            {!isLoading && items.length === 0 ? (
+              <div className="w-full flex justify-center items-center py-20">
+                <p className="text-gray-500 text-lg font-medium">No items found.</p>
+              </div>
+            ) : (
+              items.map((itm) => (
+                <ItemCard
+                  key={itm.itemcode}
+                  itm={itm}
+                  onOpen={handleOpen}
+                  onAddToCart={handleAddToCart}
                 />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ✅ Modal is mounted ONLY when open (no invisible overlay blocking scroll) */}
+        <Modal open={openItemModal} onClose={() => setOpenItemModal(false)}>
+          {selectedItem && (
+            <div className="flex flex-col items-center gap-3">
+              <img
+                decoding="async"
+                loading="lazy"
+                src={getItemImageUrl(selectedItem.itemcode)}
+                alt={selectedItem.itemname}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = notavail;
+                }}
+                className="rounded-2xl max-h-[60vh] object-cover"
+              />
+
+              <div className="w-full px-2">
+                <h4 className="text-xs text-neutral-600">
+                  {selectedItem.itemcode}
+                </h4>
+                <p className="text-lg font-semibold">{selectedItem.itemname}</p>
+                <div className="mt-10 flex items-center justify-center">
+                  <PhilippinePeso className="h-4 w-4" />
+                  <p>{selectedItem.price.toLocaleString()}</p>
+                  <ShoppingBag
+                    className="text-[#3cb54c] cursor-pointer ml-auto h-5 w-5"
+                    onClick={() => {
+                      setOpenItemModal(false);
+                      handleAddToCart(selectedItem);
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </Modal>
+          )}
+        </Modal>
 
-      <Modal open={openCartModal} onClose={() => setOpenCartModal(false)}>
-        <ModalCart
-          propshow={setOpenCartModal}
-          selectedItem={selectedItem}
-        ></ModalCart>
-      </Modal>
-    </div>
+        <Modal open={openCartModal} onClose={() => setOpenCartModal(false)}>
+          <ModalCart
+            propshow={setOpenCartModal}
+            selectedItem={selectedItem}
+          ></ModalCart>
+        </Modal>
+      </div>
+    </>
   );
 }

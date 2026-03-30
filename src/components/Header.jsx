@@ -1,5 +1,5 @@
 import SearchBar from "./SearchBar";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag,ChevronUp } from "lucide-react";
 import logo from "../assets/logo.png";
 
 import { useShop } from "../context/ShopContext";
@@ -40,6 +40,12 @@ export default function Header() {
                     <div className="absolute top-[-8px] right-[-8px] bg-red-500/90 h-4 w-4 rounded-full overflow-hidden text-[8px] text-white flex justify-center items-center">{cartValue.length}</div>
                 </div>
             </div>
+                        <div className={`fixed bottom-4 -translate-x-1/2 left-1/2`}>
+                <ChevronUp onClick={handleCartClick} className="text-white cursor-pointer" />
+            </div>
         </div>
     );
 }
+
+
+

@@ -4,8 +4,7 @@ import { useAuth } from "./AuthContext";
 const ShopContext = createContext();
 
 export function ShopProvider({ children }) {
-  const { profile } = useAuth();
-
+  const { profile, branch } = useAuth();
   const [view, setView] = useState("");
   const [quoteNum, setQuoteNum] = useState("-");
   const [quoteStatus, setQuoteStatus] = useState("draft");
@@ -16,7 +15,7 @@ export function ShopProvider({ children }) {
   const quoteStorageKey = profile?.id ? `quoteDetails_${profile.id}` : null;
 
   const todaysDate = new Date().toISOString().split("T")[0];
-  const validUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const validUntil = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
 
@@ -26,15 +25,15 @@ export function ShopProvider({ children }) {
     Comp: "",
     Loc: "",
     Proj: "",
-    frName: "",
+    frName: branch?.company_name,
     Qdate: todaysDate,
     validUntil: validUntil,
     ins_charge: "0",
     del_charge: "0",
     leadTime: "",
     warranty: "",
-    prepby: "",
-    designationOfUser: "",
+    prepby: profile?.fullname || "",
+    designationOfUser: profile?.designation || "",
     iduser: profile?.id || "",
     deptuser: profile?.department || "",
     Discount: "Y",

@@ -12,7 +12,19 @@ export default function SignOff(){
   <p className="mt-3">Sincerely,</p>
 
   <div className="flex flex-col gap-1" >
-    <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
+    <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  bg-white`}
+          onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
+          defaultValue = {quoteDetails?.prepby}
+          placeholder="Name"
+          disabled="true"
+    />
+    <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0 bg-white`}
+          onChange={(e)=> handleCustomerDetailsOnchange('designationOfUser', e.target.value)}
+          defaultValue = {quoteDetails?.designationOfUser}
+          placeholder="Designation"
+          disabled="true"
+    />
+    {/* <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
           onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
           defaultValue = {quoteDetails?.prepby}
           placeholder="Name"
@@ -23,7 +35,7 @@ export default function SignOff(){
           defaultValue = {quoteDetails?.designationOfUser}
           placeholder="Designation"
           disabled={quoteStatus ==="locked"}
-    />
+    /> */}
 
 
 
