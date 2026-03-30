@@ -8,14 +8,51 @@ import { useRef, useState } from "react";
 
 import { useAuth } from "../../context/AuthContext";
 
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
 
-export default function CartForm({printRef}) {
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+
+
+export default function CartForm({ printRef }) {
 
     const { cartValue, setCartValue, handleCustomerDetailsOnchange, quoteDetails, setQuoteDetails, quoteNum, quoteStatus } = useShop();
-    const {branch} = useAuth();
+    const { branch } = useAuth();
     const [pendingDeleteUid, setPendingDeleteUid] = useState(null)
 
     const delItemModal = useRef();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
+    function handleDragEnd(event) {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id) return;
+
+        setCartValue((items) => {
+            const oldIndex = items.findIndex((item) => item.uid === active.id);
+            const newIndex = items.findIndex((item) => item.uid === over.id);
+
+            if (oldIndex === -1 || newIndex === -1) return items;
+
+            return arrayMove(items, oldIndex, newIndex);
+        });
+    }
 
 
     function calculatePrice(quantity, price, discount = 0) {
@@ -29,7 +66,7 @@ export default function CartForm({printRef}) {
         const itemTotal = calculatePrice(
             item.Quantity,
             item.SRP,
-            item.Discount   
+            item.Discount
         );
 
         return acc + itemTotal;
@@ -87,10 +124,10 @@ export default function CartForm({printRef}) {
                                     <input
                                         name={f.name}
                                         type="text"
-                                        className={`flex-1 h-4  outline-none px-1 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
+                                        className={`flex-1 h-4  outline-none px-1 ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60"}`}
                                         defaultValue={quoteDetails?.[f.name] || ""}
                                         onChange={(e) => handleCustomerDetailsOnchange(f.name, e.target.value)}
-                                        disabled={quoteStatus ==="locked"}
+                                        disabled={quoteStatus === "locked"}
                                     />
                                 </div>
                             ))}
@@ -108,8 +145,8 @@ export default function CartForm({printRef}) {
                                         handleCustomerDetailsOnchange("frName", e.target.value);
                                     }}
                                     defaultValue={quoteDetails?.frName || ""}
-                                    className={`flex-1 h-4 outline-none px-1 ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
-                                    disabled={quoteStatus ==="locked"}
+                                    className={`flex-1 h-4 outline-none px-1 ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60"}`}
+                                    disabled={quoteStatus === "locked"}
                                 />
                             </div>
 
@@ -155,12 +192,12 @@ export default function CartForm({printRef}) {
                                 <input
                                     name="validUntil"
                                     type="date"
-                                    className={`flex-1 h-4 px-1 outline-none ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
+                                    className={`flex-1 h-4 px-1 outline-none ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60"}`}
                                     value={quoteDetails.validUntil}
-                                    disabled={quoteStatus ==="locked"}
-                                        onChange={(e) =>
-                                        setQuoteDetails((prev) => ({...prev,validUntil: e.target.value}))
-                                        }
+                                    disabled={quoteStatus === "locked"}
+                                    onChange={(e) =>
+                                        setQuoteDetails((prev) => ({ ...prev, validUntil: e.target.value }))
+                                    }
                                 />
                             </div>
                         </div>
@@ -181,59 +218,72 @@ export default function CartForm({printRef}) {
                 {/* ITEMS TABLE */}
                 <section className="mt-4">
                     <div className="w-full overflow-x-auto">
-                        <table className="w-full border-collapse text-[10px]">
-                            <thead>
-                                <tr className="border-y border-black">
-                                    <th className="py-1 font-semibold text-center w-[180px]">Picture</th>
-                                    <th className="py-1 font-semibold text-center w-[70px]">Quantity</th>
-                                    <th className="py-1 font-semibold text-left">Description</th>
-                                    <th className="py-1 font-semibold text-left w-[70px]">Discount</th>
-                                    <th className="py-1 font-semibold text-right w-[70px]">SRP</th>
-                                    <th className="py-1 font-semibold text-right w-[70px]">Total</th>
-                                    {quoteStatus !== "locked" ? (<th className="py-1 w-[30px]"></th>): (<th className="py-1 w-[10px]"></th>)}
-                                    
-                                </tr>
-                            </thead>
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <table className="w-full border-collapse text-[10px]">
+                                <thead>
+                                    <tr className="border-y border-black">
+                                        {quoteStatus !== "locked" && (
+                                            <th className="py-1 font-semibold text-center w-[30px]"></th>
+                                        )}
+                                        <th className="py-1 font-semibold text-center w-[180px]">Picture</th>
+                                        <th className="py-1 font-semibold text-center w-[70px]">Quantity</th>
+                                        <th className="py-1 font-semibold text-left">Description</th>
+                                        <th className="py-1 font-semibold text-left w-[70px]">Discount</th>
+                                        <th className="py-1 font-semibold text-right w-[70px]">SRP</th>
+                                        <th className="py-1 font-semibold text-right w-[70px]">Total</th>
+                                        {quoteStatus !== "locked" ? (<th className="py-1 w-[30px]"></th>) : (<th className="py-1 w-[10px]"></th>)}
 
-                            <tbody>
+                                    </tr>
+                                </thead>
 
-                                {cartValue.map(p => <ItemTable key={p.uid} openDelModal={openDelModal} calculatePrice={calculatePrice} p={p} />)}
+                                <tbody>
+                                    <SortableContext
+                                        items={cartValue.map((item) => item.uid)}
+                                        strategy={verticalListSortingStrategy}
+                                    >
 
-                            </tbody>
+                                        {cartValue.map(p => <ItemTable key={p.uid} openDelModal={openDelModal} calculatePrice={calculatePrice} p={p} />)}
+                                    </SortableContext>
+                                </tbody>
 
-                        </table>
+                            </table>
+                        </DndContext>
 
                         {/* TOTAL FOOTER */}
                         <div className="flex justify-between px-4 items-center gap-6 border-b border-black py-2 text-[10px]">
                             <div className="font-semibold">Total Amount</div>
                             <div className="w-[110px] text-right font-semibold">{
-                            totalAmount.toLocaleString("en-PH", {minimumFractionDigits: 2,maximumFractionDigits: 2,})
+                                totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })
                             }
                             </div>
                         </div>
 
                         <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
                             <div className="font-semibold">Delivery Charges</div>
-                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60 px-2 "}`}
+                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60 px-2 "}`}
                                 onChange={(e) => handleCustomerDetailsOnchange('del_charge', e.target.value.toString())}
                                 defaultValue={Number(quoteDetails?.del_charge)}
-                                disabled={quoteStatus ==="locked"}
+                                disabled={quoteStatus === "locked"}
                             />
 
                         </div>
 
                         <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
                             <div className="font-semibold">Installation Charges</div>
-                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60 px-2"}`}
+                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60 px-2"}`}
                                 onChange={(e) => handleCustomerDetailsOnchange('ins_charge', e.target.value.toString())}
                                 defaultValue={Number(quoteDetails?.ins_charge)}
-                                disabled={quoteStatus ==="locked"}
+                                disabled={quoteStatus === "locked"}
                             />
                         </div>
 
                         <div className="flex justify-between px-4 items-center gap-6 py-2 text-[10px]">
                             <div className="font-semibold">Grand Total</div>
-                            <div className="w-[110px] text-right font-semibold">{grandTotalAmount.toLocaleString("en-PH", {minimumFractionDigits: 2,maximumFractionDigits: 2,})}</div>
+                            <div className="w-[110px] text-right font-semibold">{grandTotalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}</div>
                         </div>
 
                     </div>
