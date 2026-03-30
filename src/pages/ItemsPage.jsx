@@ -9,7 +9,7 @@ import Modal from "../components/Modal"; // the “proper modal” component (po
 import notavail from "../assets/notavail.webp";
 import ModalCart from "../components/ModalCart";
 
-  function getItemImageUrl(itemcode) {
+function getItemImageUrl(itemcode) {
   if (!itemcode) return notavail;
 
   const { data } = supabase.storage
@@ -23,7 +23,6 @@ import ModalCart from "../components/ModalCart";
 const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
   return (
     <div
-      onClick={() => onOpen(itm)}
       className="
         rounded-2xl overflow-hidden flex flex-col gap-2
         w-full md:w-[calc(50%-10px)] lg:w-[calc(33%-10px)] xl:w-[calc(25%-20px)] 2xl:w-[calc(20%-20px)]
@@ -32,25 +31,26 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
       style={{ contentVisibility: "auto", containIntrinsicSize: "300px 420px" }}
     >
       {/* Fixed height prevents layout shifting while images load */}
-      <div className="bg-[#c8c6c6] rounded-2xl overflow-hidden shadow-md">     
-          <img
-            decoding="async"
-            loading="lazy"
-            src={getItemImageUrl(itm.itemcode)}
-            alt={itm.itemname}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = notavail;
-            }}
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <div className="bg-[#c8c6c6] rounded-2xl overflow-hidden shadow-md">
+        <img
+          onClick={() => onOpen(itm)}
+          decoding="async"
+          loading="lazy"
+          src={getItemImageUrl(itm.itemcode)}
+          alt={itm.itemname}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = notavail;
+          }}
+          className="w-full h-full object-cover"
+        />
+      </div>
 
 
       <div className="rounded-2xl px-6 flex flex-col gap-1 mb-2">
         <p className="truncate">{itm.itemname}</p>
         <div className="flex items-center gap-1">
-        {/* <p >{itm.promo?.pm_discval}</p> */}
+          {/* <p >{itm.promo?.pm_discval}</p> */}
           <PhilippinePeso className="h-3 w-3" />
           <p>{itm.price.toLocaleString()}</p>
         </div>
@@ -84,75 +84,76 @@ export default function ItemsPage() {
   const [openCartModal, setOpenCartModal] = useState(false);
 
 
-useEffect(() => {
-  let ignore = false;
+  useEffect(() => {
+    let ignore = false;
 
-  async function loadItems() {
-    setError("");
-    
-    // if you want no request when both are empty
-    if (!query && !groupQuery) {
-      setItems([]);
-      return;
+    async function loadItems() {
+      setError("");
+
+      // if you want no request when both are empty
+      if (!query && !groupQuery) {
+        setItems([]);
+        return;
+      }
+
+      let dbQuery = supabase
+        .from("items")
+        .select(`
+    itemcode,
+    itemname,
+    price,
+    promo:promo_discount (
+      pm_discval
+    )
+  `)
+        .order("price", { ascending: false });
+
+      // let dbQuery = supabase
+      //   .from("items")
+      //   .select(`
+      //     itemcode,
+      //     itemname,
+      //     price
+      //     `);
+      // other field you can get
+      // itmsgrpcod,
+      // u_item_classification,
+      // u_interactive,
+      // pricelist,
+      // activeqrygroup,
+      // synced_at
+
+      if (query) {
+        dbQuery = dbQuery.or(
+          `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
+        );
+      }
+
+      if (groupQuery) {
+        dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
+      }
+
+      dbQuery = dbQuery.order("itemname", { ascending: true });
+
+      const { data, error } = await dbQuery;
+
+      if (ignore) return;
+
+      if (error) {
+        setError(error.message);
+        setItems([]);
+        return;
+      }
+
+      setItems(data || []);
     }
 
-        let dbQuery = supabase
-          .from("items")
-          .select(`
-        itemcode,
-        itemname,
-        price,
-         promo:promo_discount (
-          pm_discval
-        )
-      `);
+    loadItems();
 
-    // let dbQuery = supabase
-    //   .from("items")
-    //   .select(`
-    //     itemcode,
-    //     itemname,
-    //     price
-    //     `);
-        // other field you can get
-        // itmsgrpcod,
-        // u_item_classification,
-        // u_interactive,
-        // pricelist,
-        // activeqrygroup,
-        // synced_at
-
-    if (query) {
-      dbQuery = dbQuery.or(
-        `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
-      );
-    }
-
-    if (groupQuery) {
-      dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
-    }
-
-    dbQuery = dbQuery.order("itemname", { ascending: true });
-
-    const { data, error } = await dbQuery;
-
-    if (ignore) return;
-
-    if (error) {
-      setError(error.message);
-      setItems([]);
-      return;
-    }
-
-    setItems(data || []);
-  }
-
-  loadItems();
-
-  return () => {
-    ignore = true;
-  };
-}, [query, groupQuery]);
+    return () => {
+      ignore = true;
+    };
+  }, [query, groupQuery]);
 
 
   useEffect(() => {

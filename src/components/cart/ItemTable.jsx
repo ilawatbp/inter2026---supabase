@@ -54,15 +54,15 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
     >
       {quoteStatus !== "locked" && (
         <td className="py-2 px-2 align-middle text-center">
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-black"
-            title="Drag to reorder"
-          >
-            <GripVertical className="w-4 h-4" />
-          </button>
+<button
+  type="button"
+  {...attributes}
+  {...listeners}
+  className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-black touch-none"
+  title="Drag to reorder"
+>
+  <GripVertical className="w-4 h-4" />
+</button>
         </td>
       )}
       {/* Picture */}

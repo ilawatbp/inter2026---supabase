@@ -18,7 +18,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   const [errorMsg, setErrorMsg] = useState();
   const discountValue = useRef();
 
-  const { cartValue, quoteDetails, setCartValue, setQuoteDetails, defaultQuoteDetails, setQuoteNum, quoteStatus, setQuoteStatus } = useShop();
+  const { cartValue, quoteDetails, setCartValue, setQuoteDetails, defaultQuoteDetails, setQuoteNum, quoteNum, quoteStatus, setQuoteStatus } = useShop();
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -72,8 +72,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   }
 
   async function submitQuote() {
-    const userBranchCode = "MUN"; // palitan natin later ng actual logged-in user's branch
-    const userId = 1;
+  
     const headerPayload = buildQuotationHeaderPayload({
       quoteDetails,
     });
@@ -181,12 +180,9 @@ export default function CartNav({ setCartView, cartView, printRef }) {
 
 
 
-  const lastSavedQno = "last"
-
-
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: lastSavedQno ? `Quotation-${lastSavedQno}` : "Quotation",
+    documentTitle: quoteNum ? `Quotation-${quoteNum}` : "Quotation",
     pageStyle: `
       @page { size: letter; margin: 1mm; }
       @media print {

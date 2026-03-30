@@ -9,18 +9,21 @@ import { useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 import {
-    DndContext,
-    closestCenter,
-    PointerSensor,
-    useSensor,
-    useSensors,
+  DndContext,
+  closestCenter,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 
 import {
-    SortableContext,
-    verticalListSortingStrategy,
-    arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
 } from "@dnd-kit/sortable";
+
+
 
 
 export default function CartForm({ printRef }) {
@@ -32,11 +35,17 @@ export default function CartForm({ printRef }) {
     const delItemModal = useRef();
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8,
-            },
-        })
+    useSensor(MouseSensor, {
+        activationConstraint: {
+        distance: 8,
+        },
+    }),
+    useSensor(TouchSensor, {
+        activationConstraint: {
+        delay: 150,
+        tolerance: 8,
+        },
+    })
     );
 
     function handleDragEnd(event) {
