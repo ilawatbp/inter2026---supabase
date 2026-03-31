@@ -8,7 +8,7 @@ export default function CategoryPage({setSubCategValue, subCategValue}) {
 
     return (
             <div
-                className={`max-w-6xl mx-auto px-4 py-10 flex flex-wrap justify-center items-center gap-6
+                className={`max-w-6xl mx-auto px-4 py-10 pt-20 md:p-0 flex flex-wrap justify-center items-center gap-6
                             transition-all duration-300 ease-in-out
                             ${subCategValue === "" ? "opacity-1" : "opacity-0"}
                             `}
@@ -22,7 +22,7 @@ export default function CategoryPage({setSubCategValue, subCategValue}) {
                     ></CategCard>
                 ))}
                 <div className="fixed bottom-4 left-4 ">
-                    <button onClick={signOut} className="text-gray-400 hover:text-gray-600">Sign Out</button>
+                    <button onClick={signOut} className="text-gray-400 hover:text-gray-600 z-50">Sign Out</button>
                 </div>
             </div>
                     );

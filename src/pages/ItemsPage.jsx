@@ -178,7 +178,7 @@ export default function ItemsPage() {
 
         {/* ✅ Only the list scrolls (header stays stable) */}
         <div className="flex-1 overflow-auto scrollbar-hide z-10">
-          <div className="w-full px-20 py-4 pt-36 flex gap-4 flex-wrap justify-evenly">
+          <div className="w-full px-10 md:px-20 py-4 pt-20 md:pt-36 flex gap-4 flex-wrap justify-evenly">
             {!isLoading && items.length === 0 ? (
               <div className="w-full flex justify-center items-center py-20">
                 <p className="text-gray-500 text-lg font-medium">No items found.</p>
