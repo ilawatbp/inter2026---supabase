@@ -3,6 +3,8 @@ import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext();
 
+const OTP_PENDING_KEY = "interactive_otp_pending";
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -10,6 +12,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpPending, setOtpPendingState] = useState(
+    sessionStorage.getItem(OTP_PENDING_KEY) === "true"
+  );
+
+  function setOtpPending(value) {
+    if (value) {
+      sessionStorage.setItem(OTP_PENDING_KEY, "true");
+      setOtpPendingState(true);
+    } else {
+      sessionStorage.removeItem(OTP_PENDING_KEY);
+      setOtpPendingState(false);
+    }
+  }
 
   // 1) Load auth session on app start
   useEffect(() => {
@@ -40,6 +55,12 @@ export function AuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+
+      if (!session) {
+        setProfile(null);
+        setBranch(null);
+        setOtpPending(false);
+      }
     });
 
     return () => {
@@ -64,20 +85,20 @@ export function AuthProvider({ children }) {
       setProfileLoading(true);
       setError("");
 
-const { data, error } = await supabase
-  .from("profiles")
-  .select(`
-    id,
-    email,
-    fullname,
-    role,
-    status,
-    designation,
-    branch_id,
-    branches (*)
-  `)
-  .eq("id", session.user.id)
-  .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(`
+          id,
+          email,
+          fullname,
+          role,
+          status,
+          designation,
+          branch_id,
+          branches (*)
+        `)
+        .eq("id", session.user.id)
+        .single();
 
       if (!mounted) return;
 
@@ -87,7 +108,7 @@ const { data, error } = await supabase
         setBranch(null);
       } else {
         setProfile(data);
-        setBranch(data?.branches ?? "wala");
+        setBranch(data?.branches ?? null);
       }
 
       setProfileLoading(false);
@@ -111,6 +132,7 @@ const { data, error } = await supabase
     setSession(null);
     setProfile(null);
     setBranch(null);
+    setOtpPending(false);
   }
 
   return (
@@ -124,6 +146,8 @@ const { data, error } = await supabase
         profileLoading,
         error,
         signOut,
+        otpPending,
+        setOtpPending,
         isAuthenticated: !!session,
         isAdmin: profile?.role === "admin",
       }}

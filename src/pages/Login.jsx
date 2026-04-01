@@ -4,9 +4,10 @@ import lamp from "../assets/bg-lamp.png";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
+import { getDeviceInfo } from "../utils/device";
 
 export default function Login() {
-  const { session } = useAuth();
+  const { session, otpPending, setOtpPending } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,11 +18,15 @@ export default function Login() {
     password: "",
   });
 
+  const [otp, setOtp] = useState("");
+  const [otpStep, setOtpStep] = useState(false);
+  const [otpMaskedEmail, setOtpMaskedEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
 
-  if (session) {
+  if (session && !otpPending && !otpStep && !authFlowInProgress) {
     return <Navigate to="/" replace />;
   }
 
@@ -48,6 +53,7 @@ export default function Login() {
 
     try {
       setLoading(true);
+      setAuthFlowInProgress(true);
       setErrorMsg("");
 
       const { error } = await supabase.auth.signInWithPassword({
@@ -57,15 +63,140 @@ export default function Login() {
 
       if (error) {
         setErrorMsg(error.message);
+        setAuthFlowInProgress(false);
         return;
       }
 
-      navigate(from, { replace: true });
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (!currentSession?.access_token) {
+        setErrorMsg("Unable to get session after login.");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      const deviceInfo = getDeviceInfo();
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify(deviceInfo),
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(result.error || "Device check failed.");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      if (result.trusted) {
+        setOtpPending(false);
+        setAuthFlowInProgress(false);
+        navigate(from, { replace: true });
+        return;
+      }
+
+      if (result.otp_required) {
+        setOtpPending(true);
+        setOtpStep(true);
+        setOtpMaskedEmail(result.branch_email_masked || "");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      setErrorMsg("Unexpected login response.");
+      setAuthFlowInProgress(false);
     } catch (err) {
       setErrorMsg("Something went wrong. Please try again.");
+      setAuthFlowInProgress(false);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+
+    if (!otp.trim()) {
+      setErrorMsg("Please enter the OTP.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMsg("");
+
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (!currentSession?.access_token) {
+        setErrorMsg("Your session expired. Please log in again.");
+        return;
+      }
+
+      const deviceInfo = getDeviceInfo();
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-device-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({
+            ...deviceInfo,
+            otp: otp.trim(),
+          }),
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(result.error || "OTP verification failed.");
+        return;
+      }
+
+      if (result.success) {
+        setOtpPending(false);
+        setOtpStep(false);
+        setOtp("");
+        navigate(from, { replace: true });
+        return;
+      }
+
+      setErrorMsg("Unexpected OTP response.");
+    } catch (err) {
+      setErrorMsg("Something went wrong during OTP verification.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCancelOtp() {
+    await supabase.auth.signOut();
+    setOtpPending(false);
+    setOtpStep(false);
+    setAuthFlowInProgress(false);
+    setOtp("");
+    setOtpMaskedEmail("");
+    setForm({
+      email: "",
+      password: "",
+    });
+    setErrorMsg("");
   }
 
   return (
@@ -83,89 +214,156 @@ export default function Login() {
       <div className="relative z-20 flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8">
         <div className="w-full max-w-md">
           <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold capitalize">Log in</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold capitalize">
+              {otpStep ? "Verify device" : "Log in"}
+            </h1>
             <p className="text-sm text-gray-500 mt-2">
-              Sign in to continue to Interactive
+              {otpStep
+                ? `Enter the OTP sent to ${otpMaskedEmail || "your branch email"}`
+                : "Sign in to continue to Interactive"}
             </p>
+            <h1 className="text-red-500 text-2xl">TEST LOGIN FILE</h1>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="border border-black rounded-3xl px-6 sm:px-8 py-8 sm:py-10 flex flex-col gap-4 bg-white/90 backdrop-blur-sm min-h-[460px]"
-          >
-            <p className="mr-auto text-sm text-gray-600">Interactive</p>
+          {!otpStep ? (
+            <form
+              onSubmit={handleSubmit}
+              className="border border-black rounded-3xl px-6 sm:px-8 py-8 sm:py-10 flex flex-col gap-4 bg-white/90 backdrop-blur-sm min-h-[460px]"
+            >
+              <p className="mr-auto text-sm text-gray-600">Interactive</p>
 
-            <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
-                type="email"
-                placeholder="Enter your email"
-                value={form.email}
-                onChange={handleChange}
-                disabled={loading}
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-
-              <div className="relative">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
                 <input
-                  id="password"
-                  name="password"
-                  className="px-5 py-4 pr-20 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={form.password}
+                  id="email"
+                  name="email"
+                  className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={form.email}
                   onChange={handleChange}
                   disabled={loading}
-                  autoComplete="current-password"
+                  autoComplete="email"
                 />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-black"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
               </div>
-            </div>
 
-            {errorMsg && (
-              <div className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {errorMsg}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    className="px-5 py-4 pr-20 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    disabled={loading}
+                    autoComplete="current-password"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-black"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out
-                ${
-                  loading
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
-                }`}
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </button>
+              {errorMsg && (
+                <div className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {errorMsg}
+                </div>
+              )}
 
-            <Link
-              to="/forgot-password"
-              className="ml-auto text-sm cursor-pointer hover:font-bold"
+              <button
+                type="submit"
+                disabled={loading}
+                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out
+                  ${
+                    loading
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
+                  }`}
+              >
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
+
+              <Link
+                to="/forgot-password"
+                className="ml-auto text-sm cursor-pointer hover:font-bold"
+              >
+                Forgot password?
+              </Link>
+            </form>
+          ) : (
+            <form
+              onSubmit={handleVerifyOtp}
+              className="border border-black rounded-3xl px-6 sm:px-8 py-8 sm:py-10 flex flex-col gap-4 bg-white/90 backdrop-blur-sm min-h-[460px]"
             >
-              Forgot password?
-            </Link>
-          </form>
+              <p className="mr-auto text-sm text-gray-600">Interactive</p>
+
+              <div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                This is a new device. Please enter the OTP sent to your branch email.
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="otp" className="text-sm font-medium">
+                  OTP
+                </label>
+                <input
+                  id="otp"
+                  name="otp"
+                  className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type="text"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (errorMsg) setErrorMsg("");
+                  }}
+                  disabled={loading}
+                  maxLength={6}
+                  autoComplete="one-time-code"
+                />
+              </div>
+
+              {errorMsg && (
+                <div className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {errorMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out
+                  ${
+                    loading
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
+                  }`}
+              >
+                {loading ? "Verifying..." : "Verify OTP"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelOtp}
+                disabled={loading}
+                className="w-full h-14 rounded-full border border-black hover:bg-black hover:text-white transition-colors duration-300"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
         </div>
       </div>
 
