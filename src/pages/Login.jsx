@@ -43,86 +43,88 @@ export default function Login() {
     }
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+async function handleSubmit(e) {
+  e.preventDefault();
 
-    if (!form.email.trim() || !form.password.trim()) {
-      setErrorMsg("Please enter your email and password.");
+  if (!form.email.trim() || !form.password.trim()) {
+    setErrorMsg("Please enter your email and password.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setAuthFlowInProgress(true);
+    setErrorMsg("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: form.email.trim(),
+      password: form.password,
+    });
+
+
+    if (error) {
+      setErrorMsg(error.message);
+      setAuthFlowInProgress(false);
       return;
     }
 
-    try {
-      setLoading(true);
-      setAuthFlowInProgress(true);
-      setErrorMsg("");
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: form.email.trim(),
-        password: form.password,
-      });
-
-      if (error) {
-        setErrorMsg(error.message);
-        setAuthFlowInProgress(false);
-        return;
-      }
-
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-
-      if (!currentSession?.access_token) {
-        setErrorMsg("Unable to get session after login.");
-        setAuthFlowInProgress(false);
-        return;
-      }
-
-      const deviceInfo = getDeviceInfo();
-
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${currentSession.access_token}`,
-          },
-          body: JSON.stringify(deviceInfo),
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        setErrorMsg(result.error || "Device check failed.");
-        setAuthFlowInProgress(false);
-        return;
-      }
-
-      if (result.trusted) {
-        setOtpPending(false);
-        setAuthFlowInProgress(false);
-        navigate(from, { replace: true });
-        return;
-      }
-
-      if (result.otp_required) {
-        setOtpPending(true);
-        setOtpStep(true);
-        setOtpMaskedEmail(result.branch_email_masked || "");
-        setAuthFlowInProgress(false);
-        return;
-      }
-
-      setErrorMsg("Unexpected login response.");
+    if (!currentSession?.access_token) {
+      setErrorMsg("Unable to get session after login.");
       setAuthFlowInProgress(false);
-    } catch (err) {
-      setErrorMsg("Something went wrong. Please try again.");
-      setAuthFlowInProgress(false);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    const deviceInfo = getDeviceInfo();
+
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${currentSession.access_token}`,
+      },
+      body: JSON.stringify(deviceInfo),
+    });
+
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      setErrorMsg(result.error || "Device check failed.");
+      setAuthFlowInProgress(false);
+      return;
+    }
+
+    if (result.trusted) {
+      setOtpPending(false);
+      setAuthFlowInProgress(false);
+      navigate(from, { replace: true });
+      return;
+    }
+
+    if (result.otp_required) {
+      setOtpPending(true);
+      setOtpStep(true);
+      setOtpMaskedEmail(result.branch_email_masked || "");
+      setAuthFlowInProgress(false);
+      return;
+    }
+
+    setErrorMsg("Unexpected login response.");
+    setAuthFlowInProgress(false);
+  } catch (err) {
+    console.error("STEP ERROR in handleSubmit:", err);
+    setErrorMsg("Something went wrong. Please try again.");
+    setAuthFlowInProgress(false);
+  } finally {
+    setLoading(false);
   }
+}
 
   async function handleVerifyOtp(e) {
     e.preventDefault();
@@ -163,6 +165,7 @@ export default function Login() {
       );
 
       const result = await res.json();
+      
 
       if (!res.ok) {
         setErrorMsg(result.error || "OTP verification failed.");
@@ -222,7 +225,6 @@ export default function Login() {
                 ? `Enter the OTP sent to ${otpMaskedEmail || "your branch email"}`
                 : "Sign in to continue to Interactive"}
             </p>
-            <h1 className="text-red-500 text-2xl">TEST LOGIN FILE</h1>
           </div>
 
           {!otpStep ? (
