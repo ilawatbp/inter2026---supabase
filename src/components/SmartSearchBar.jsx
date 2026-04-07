@@ -27,7 +27,7 @@ export default function SmartSearchBar() {
     }
 
     return (
-        <div className='flex gap-2 items-center justify-end w-[1000px]'>
+        <div className='flex gap-2 items-center justify-end'>
             <div className={`flex flex-row transition-all duration-300 ease-in-out 
                             ${isSmartSearch ? 'opacity-100 w-80 translate-x-0' : 'opacity-0 w-0 translate-x-2'}`}>
                 <input

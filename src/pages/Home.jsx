@@ -19,11 +19,11 @@ export default function Home() {
             </div>
 
 
-            <div className="fixed bottom-8 z-50 w-full flex justify-between items-center px-4">
-                <button onClick={signOut} className="text-gray-400 hover:text-gray-600 z-50">Sign Out</button>
+            <div className="md:fixed bottom-8 z-50 px-4
+                            w-full flex flex-col-reverse md:flex-row justify-between items-center ">
+                <button onClick={signOut} className="text-gray-400 hover:text-gray-600 z-50 my-10 md:my-0">Sign Out</button>
                 <SmartSearchBar />
             </div>
-
 
         </div>
     )
