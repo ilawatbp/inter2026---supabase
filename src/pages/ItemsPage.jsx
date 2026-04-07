@@ -21,7 +21,7 @@ function getItemImageUrl(itemcode) {
   return data?.publicUrl || notavail;
 }
 
-/** ✅ Card extracted + memoized to reduce re-renders */
+/** Card extracted + memoized to reduce re-renders */
 const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
   return (
     <div
@@ -75,7 +75,7 @@ export default function ItemsPage() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q");
   const groupQuery = searchParams.get("group");
-
+  const smartQuery = searchParams.get("smart"); // smart search
 
 
   const [items, setItems] = useState([]);
@@ -86,24 +86,52 @@ export default function ItemsPage() {
   const [openCartModal, setOpenCartModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false)
 
-
   useEffect(() => {
     let ignore = false;
     let timeoutId;
 
     async function loadItems() {
-      setError("");
-      setIsLoading(true);
+  setError("");
+  setIsLoading(true);
 
-      if (!query && !groupQuery) {
-        setItems([]);
-        setIsLoading(false);
-        return;
-      }
+  if (!query && !groupQuery && !smartQuery) {
+    setItems([]);
+    setIsLoading(false);
+    return;
+  }
 
-      let dbQuery = supabase
-        .from("items")
-        .select(`
+  // =========================
+  // SMART SEARCH MODE
+  // =========================
+  if (smartQuery) {
+    const { data: smartData, error: smartError } = await supabase.functions.invoke("smart-search", {
+      body: {
+        search: smartQuery,
+        matchCount: 24,
+        matchThreshold: 0.2,
+      },
+    });
+
+    if (ignore) return;
+
+    if (smartError) {
+      setError(smartError.message || "Smart search failed.");
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const matchedCodes = (smartData?.results || []).map((row) => row.itemcode);
+
+    if (!matchedCodes.length) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const { data: fullItems, error: fullItemsError } = await supabase
+      .from("items")
+      .select(`
         itemcode,
         itemname,
         price,
@@ -111,36 +139,75 @@ export default function ItemsPage() {
           pm_discval
         )
       `)
-        .order("price", { ascending: false });
+      .in("itemcode", matchedCodes);
 
-      if (query) {
-        dbQuery = dbQuery.or(
-          `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
-        );
-      }
+    if (ignore) return;
 
-      if (groupQuery) {
-        dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
-      }
-
-      dbQuery = dbQuery.order("itemname", { ascending: true });
-
-      const { data, error } = await dbQuery;
-
-      if (ignore) return;
-
-      if (error) {
-        setError(error.message);
-        setItems([]);
-        setIsLoading(false);
-        return;
-      }
-
-      setItems(data || []);
-      timeoutId = setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+    if (fullItemsError) {
+      setError(fullItemsError.message);
+      setItems([]);
+      setIsLoading(false);
+      return;
     }
+
+    // preserve smart-search ranking order
+    const sortedItems = matchedCodes
+      .map((code) => fullItems.find((item) => item.itemcode === code))
+      .filter(Boolean);
+
+    setItems(sortedItems);
+
+    timeoutId = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return;
+  }
+
+  // =========================
+  // NORMAL / GROUP SEARCH MODE
+  // =========================
+  let dbQuery = supabase
+    .from("items")
+    .select(`
+      itemcode,
+      itemname,
+      price,
+      activeqrygroup,
+      promo:promo_discount (
+        pm_discval
+      )
+    `)
+    .order("price", { ascending: false });
+
+  if (query) {
+    dbQuery = dbQuery.or(
+      `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
+    );
+  }
+
+  if (groupQuery) {
+    dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
+  }
+
+  dbQuery = dbQuery.order("itemname", { ascending: true });
+
+  const { data, error } = await dbQuery;
+
+  if (ignore) return;
+
+  if (error) {
+    setError(error.message);
+    setItems([]);
+    setIsLoading(false);
+    return;
+  }
+
+  setItems(data || []);
+  timeoutId = setTimeout(() => {
+    setIsLoading(false);
+  }, 1000);
+}
 
     loadItems();
 
@@ -148,7 +215,7 @@ export default function ItemsPage() {
       ignore = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [query, groupQuery]);
+}, [query, groupQuery, smartQuery]);
 
 
   useEffect(() => {
@@ -179,6 +246,17 @@ export default function ItemsPage() {
         {/* ✅ Only the list scrolls (header stays stable) */}
         <div className="flex-1 overflow-auto scrollbar-hide z-10">
           <div className="w-full px-10 md:px-20 py-4 pt-20 md:pt-36 flex gap-4 flex-wrap justify-evenly">
+            {!isLoading && smartQuery && (
+  <div className="w-full mb-2 text-sm text-gray-500">
+    Smart search results for: <span className="font-medium">{smartQuery}</span>
+  </div>
+)}
+
+{!isLoading && query && !smartQuery && (
+  <div className="w-full mb-2 text-sm text-gray-500">
+    Search results for: <span className="font-medium">{query}</span>
+  </div>
+)}
             {!isLoading && items.length === 0 ? (
               <div className="w-full flex justify-center items-center py-20">
                 <p className="text-gray-500 text-lg font-medium">No items found.</p>

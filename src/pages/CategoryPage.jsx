@@ -1,10 +1,10 @@
 import categories from "../data/categories";
 import CategCard from "../components/CategCard";
-import { useAuth } from "../context/AuthContext";
+
 
 export default function CategoryPage({setSubCategValue, subCategValue}) {
 
-    const {signOut, profile} = useAuth();
+
 
     return (
             <div
@@ -21,9 +21,6 @@ export default function CategoryPage({setSubCategValue, subCategValue}) {
                         setSubCategValue={setSubCategValue}
                     ></CategCard>
                 ))}
-                <div className="fixed bottom-4 left-4 ">
-                    <button onClick={signOut} className="text-gray-400 hover:text-gray-600 z-50">Sign Out</button>
-                </div>
             </div>
                     );
 }
