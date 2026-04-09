@@ -225,16 +225,21 @@ export default function CartNav({ setCartView, cartView, printRef }) {
 
             {quoteStatus !== "locked" && (
               <>
-                {/* <button type="button" className="rounded-full px-4 py-2 hover:bg-green-500 transition">
-                  Service Form
-                </button> */}
+                <button type="button" className="rounded-full px-4 py-2 hover:text-green-400 transition"
+                 onClick={() => setCartView(cartView === "form" ? "serviceForm" : "form")}
+                >
+                  
+                  {cartView == "serviceForm" && "Quotation Form"}
+                  {cartView == "form" && "Service Form"}
+                </button>
 
                 <button type="button" 
                 // className="rounded-full px-4 py-2 hover:bg-green-500 transition"
                 className="rounded-full px-4 py-2 hover:text-green-300 transition"
                   onClick={() => setCartView(cartView === "form" ? "history" : "form")}
                 >
-                  {cartView == "form" ? "Quotation History" : "Quotation Form"}
+                  {cartView == "form" && "Quotation History"}
+                  {cartView == "history" && "Quotation Form"}
                 </button>
                 {cartView == "form" && (
                   <button type="button" className="rounded-full px-4 py-2 hover:text-green-400 transition"
