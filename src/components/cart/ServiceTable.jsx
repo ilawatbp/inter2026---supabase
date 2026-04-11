@@ -167,7 +167,6 @@ export default function ServiceTable() {
                 </div>
               </td>
 
-
               <td className={`p-2 align-top`}>
                 <input
                   type="number"
