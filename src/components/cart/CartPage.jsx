@@ -30,7 +30,6 @@ export default function CartPage() {
 
       {cartView == "serviceForm" && <ServiceCartForm printRef={printRef} />}
 
-
       {cartView == "serviceHistory" && (
         <ServiceCartHistory setCartView={setCartView} />
       )}
