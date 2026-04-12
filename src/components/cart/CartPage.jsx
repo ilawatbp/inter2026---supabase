@@ -16,6 +16,7 @@ export default function CartPage() {
     return viewValue;
   });
 
+  
   useEffect(() => {
     localStorage.setItem("storageCartView", cartView);
   }, [cartView]);
