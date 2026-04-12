@@ -1,7 +1,7 @@
 import SignOff from "./SignOff";
 import TermsAndConditions from "./TermsAndConditions";
 import CartHead from "./CartHead";
-import ServiceTable from "./ServiceTable.JSX";
+import ServiceTable from "./ServiceTable";
 
 export default function ServiceCartForm({ printRef }) {
   return (
@@ -12,7 +12,7 @@ export default function ServiceCartForm({ printRef }) {
         <TermsAndConditions viewMode="serviceForm" />
         <SignOff />
       </main>
-      
+
     </>
   );
 }
