@@ -38,6 +38,7 @@ export default function CartHead() {
         </div>
       </section>
 
+
       <hr className="h-[1px] bg-black border-0 mb-2" />
 
       {/* CUSTOMER DETAILS */}

@@ -18,6 +18,7 @@ export default function ServiceCartHistory({ setCartView }) {
 
   const itemsPerPage = 100;
 
+  
   function getDefaultServiceRows() {
     return [
       {

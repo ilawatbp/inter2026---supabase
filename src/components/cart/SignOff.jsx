@@ -24,6 +24,7 @@ export default function SignOff(){
           placeholder="Designation"
           disabled="true"
     />
+    
     {/* <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
           onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
           defaultValue = {quoteDetails?.prepby}

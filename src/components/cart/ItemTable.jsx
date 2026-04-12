@@ -17,7 +17,6 @@ function getItemImageUrl(itemcode) {
   return data?.publicUrl || notavail;
 }
 
-
 export default function ItemTable({ p, openDelModal, calculatePrice }) {
 
   const { setCartValue, quoteStatus } = useShop();

@@ -20,6 +20,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   const [errorMsg, setErrorMsg] = useState("");
   const discountValue = useRef();
 
+  
   const {
     cartValue,
     quoteDetails,

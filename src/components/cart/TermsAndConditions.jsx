@@ -24,6 +24,7 @@ export default function TermsAndConditions({ viewMode }) {
               "A 50% down payment is required upon order confirmation of this quotation, with full payment due upon completion of services."}
           </div>
         </div>
+        
 
         {/* 2 */}
         <div className="grid grid-cols-[190px_1fr] gap-4">

@@ -6,8 +6,6 @@ import CartHead from "./CartHead";
 import { useShop } from "../../context/ShopContext";
 import { useRef, useState } from "react";
 
-
-
 import {
   DndContext,
   closestCenter,

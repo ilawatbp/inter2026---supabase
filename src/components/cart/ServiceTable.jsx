@@ -22,6 +22,7 @@ export default function ServiceTable() {
       },
     ]);
   };
+  
 
   const deleteRow = (rowId) => {
     setRowsService((prev) => {

@@ -28,6 +28,7 @@ export default function CartHistory({ setCartView }) {
       if (headerError) {
         throw new Error(headerError.message || "Failed to load quotation header");
       }
+      
 
       // 2) Load items
       const { data: items, error: itemsError } = await supabase

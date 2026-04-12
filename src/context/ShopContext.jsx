@@ -23,6 +23,7 @@ export function ShopProvider({ children }) {
     ],
     []
   );
+  
 
   const [rowsService, setRowsService] = useState(defaultRowsService);
 
