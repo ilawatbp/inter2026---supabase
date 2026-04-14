@@ -94,6 +94,9 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
       <td className="py-2">
         <div className="font-semibold">{p.id_no}</div>
         <div className="mt-2">
+          {p.itemcode}
+        </div>
+        <div className="mt-2">
           {p.itemname}
         </div>
         <div className="mt-2">Area:

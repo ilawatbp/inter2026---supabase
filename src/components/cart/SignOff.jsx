@@ -12,7 +12,7 @@ export default function SignOff(){
   <p className="mt-3">Sincerely,</p>
 
   <div className="flex flex-col gap-1" >
-    <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  bg-white`}
+    {/* <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  bg-white`}
           onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
           defaultValue = {quoteDetails?.prepby}
           placeholder="Name"
@@ -23,9 +23,9 @@ export default function SignOff(){
           defaultValue = {quoteDetails?.designationOfUser}
           placeholder="Designation"
           disabled="true"
-    />
+    /> */}
     
-    {/* <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
+    <input type="text" className={`w-[180px] h-4 px-2 py-1 m-0  ${quoteStatus ==="locked" ? "bg-white" : "bg-gray-200/60"}`}
           onChange={(e)=> handleCustomerDetailsOnchange( 'prepby', e.target.value)}
           defaultValue = {quoteDetails?.prepby}
           placeholder="Name"
@@ -36,7 +36,7 @@ export default function SignOff(){
           defaultValue = {quoteDetails?.designationOfUser}
           placeholder="Designation"
           disabled={quoteStatus ==="locked"}
-    /> */}
+    />
 
 
 
@@ -77,9 +77,9 @@ export default function SignOff(){
     By signing this quotation, all parties acknowledge and agree to the terms
     and conditions outlined herein. Upon acceptance, this quotation shall
     constitute a binding agreement between{" "}
-    <input type="text" className="inline-block border-b border-black min-w-[120px] px-1 " defaultValue={quoteDetails?.Comp}/>
+    <input type="text" className="inline-block border-b border-black min-w-[120px] px-1 " defaultValue={quoteDetails?.Comp} disabled="true"/>
     and{" "}
- <input type="text" className="inline-block border-b border-black min-w-[120px] px-1"  defaultValue={quoteDetails?.frName}/>
+ <input type="text" className="inline-block border-b border-black min-w-[120px] px-1"  defaultValue={quoteDetails?.frName} disabled="true"/>
     , subject to the terms specified.
   </p>
 </section>

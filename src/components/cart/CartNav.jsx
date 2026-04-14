@@ -337,7 +337,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
         setOpenErrorModal(true);
         setErrorMsg("Please Complete the Customer Details");
         return;
-      }
+      }   
 
       setOpenSaveModal(true);
       return;
@@ -363,6 +363,18 @@ export default function CartNav({ setCartView, cartView, printRef }) {
         setErrorMsg("Please Complete the Customer Details");
         return;
       }
+
+         
+
+        const hasEmptyScope = rowsService.some(({scopes})=>
+          scopes.some((scope)=> scope.trim() === '')
+        );
+
+        if (hasEmptyScope) {
+              setOpenErrorModal(true);
+              setErrorMsg("Please Complete the Scope Details");
+              return;
+        }
 
       setOpenSaveModal(true);
     }
@@ -542,6 +554,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
             ? "Are you sure you want to save this service quotation?"
             : "Are you sure you want to save this quotation?"}
         </p>
+       
 
         <div className="flex justify-center gap-4 pt-2">
           <button

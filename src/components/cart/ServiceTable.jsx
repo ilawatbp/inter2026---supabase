@@ -138,7 +138,6 @@ export default function ServiceTable() {
                         onChange={(e) =>
                           updateScope(row.id, index, e.target.value)
                         }
-                        rowsService={2}
                         className="w-full resize-none border border-gray-300 p-2 outline-none rounded-2xl"
                         placeholder="Enter scope of work"
                         disabled={quoteStatus === "locked"}
@@ -146,13 +145,15 @@ export default function ServiceTable() {
                       {quoteStatus !== "locked" && (
                         <CircleX
                           onClick={() => deleteScopeField(row.id, index)}
-                          className={`absolute hover:text-red-500 text-red-300 fill-white top-[-8px] right-0 h-5 w-5 cursor-pointer ${
-                            index === 0 ? "opacity-0 pointer-events-none" : ""
-                          }`}
+                          className={`absolute hover:text-red-500 text-red-300 fill-white top-[-8px] right-0 h-5 w-5 cursor-pointer
+                                      transition-all duration-700 ease-in-out
+                                      ${row.scopes.length > 1 ? "opacity-100" : "opacity-0 pointer-events-none"}
+                            `}
                           strokeWidth={1}
                         />
                       )}
                     </div>
+
                   ))}
 
                   <div className="flex justify-end">
@@ -171,6 +172,7 @@ export default function ServiceTable() {
                 <input
                   type="number"
                   value={row.amount}
+                  min={0}
                   onChange={(e) => updateAmount(row.id, e.target.value)}
                   className="w-full border border-gray-300 p-2 outline-none rounded-2xl"
                   disabled={quoteStatus === "locked"}
@@ -182,15 +184,17 @@ export default function ServiceTable() {
                   <Delete
                     onClick={() => deleteRow(row.id)}
                     strokeWidth={1}
-                    className={`mx-auto cursor-pointer hover:text-red-500 text-red-300 ${
-                      rowIndex === 0 ? "opacity-0 pointer-events-none" : ""
-                    }`}
-                  />
-                )}
+                    className={`mx-auto cursor-pointer hover:text-red-500 text-red-300 
+                      transition-all duration-700 ease-in-out
+                      ${
+                        rowsService.length > 1 ? "opacity-100" : "opacity-0 pointer-events-none"
+                      }
+                      `}
+                      />
+                    )}
               </td>
             </tr>
           ))}
-
           <tr>
             <td colSpan={2} className="p-3 text-end font-medium ">
               GRAND TOTAL
