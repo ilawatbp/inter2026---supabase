@@ -1,0 +1,257 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js/cors";
+
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+async function sha256(text) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function getClientIp(req) {
+  const xForwardedFor = req.headers.get("x-forwarded-for");
+  if (xForwardedFor) return xForwardedFor.split(",")[0].trim();
+
+  const xRealIp = req.headers.get("x-real-ip");
+  if (xRealIp) return xRealIp.trim();
+
+  return null;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return jsonResponse({ error: "Missing Authorization header" }, 401);
+    }
+
+    const token = authHeader.replace("Bearer ", "").trim();
+    console.log("VERIFY TOKEN EXISTS:", !!token);
+
+    const body = await req.json();
+    const {
+      device_id,
+      otp,
+      device_name,
+      user_agent,
+      browser,
+      browser_version,
+      os,
+      os_version,
+      platform,
+      screen_resolution,
+      timezone,
+      language,
+    } = body ?? {};
+
+    console.log("VERIFY BODY:", { device_id, otp });
+
+    if (!device_id || !otp) {
+      return jsonResponse({ error: "device_id and otp are required" }, 400);
+    }
+
+    const ipAddress = getClientIp(req);
+    const geoJson = ipAddress ? { ip: ipAddress } : null;
+
+    const supabaseUser = createClient(
+      Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SUPABASE_ANON_KEY")
+    );
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseUser.auth.getUser(token);
+
+    console.log("VERIFY GET USER ERROR:", userError);
+    console.log("VERIFY GET USER DATA:", user);
+
+    if (userError || !user) {
+      return jsonResponse(
+        { error: userError?.message || "Unauthorized" },
+        401
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+    );
+
+    const { data: otpRow, error: otpError } = await supabaseAdmin
+      .from("login_otps")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("device_id", device_id)
+      .is("consumed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    console.log("VERIFY OTP ROW:", otpRow);
+    console.log("VERIFY OTP ERROR:", otpError);
+
+    if (otpError) {
+      return jsonResponse({ error: otpError.message }, 500);
+    }
+
+    if (!otpRow) {
+      return jsonResponse({ error: "No active OTP found" }, 400);
+    }
+
+    if (new Date(otpRow.expires_at).getTime() < Date.now()) {
+      return jsonResponse({ error: "OTP expired" }, 400);
+    }
+
+    if (otpRow.attempts >= otpRow.max_attempts) {
+      return jsonResponse({ error: "OTP attempts exceeded" }, 400);
+    }
+
+    const otpHash = await sha256(`${user.id}:${device_id}:${otp.trim()}`);
+    console.log("VERIFY COMPUTED HASH:", otpHash);
+    console.log("VERIFY STORED HASH:", otpRow.otp_hash);
+
+    if (otpHash !== otpRow.otp_hash) {
+      await supabaseAdmin
+        .from("login_otps")
+        .update({ attempts: otpRow.attempts + 1 })
+        .eq("id", otpRow.id);
+
+      await supabaseAdmin.from("login_audit_logs").insert({
+        user_id: user.id,
+        email: user.email,
+        event_type: "otp_verification",
+        result: "failed",
+        reason: "Invalid OTP",
+        device_id,
+        ip_address: ipAddress,
+        geo_json: geoJson,
+        user_agent: user_agent ?? null,
+      });
+
+      return jsonResponse({ error: "Invalid OTP" }, 400);
+    }
+
+    await supabaseAdmin
+      .from("login_otps")
+      .update({ consumed_at: new Date().toISOString() })
+      .eq("id", otpRow.id);
+
+    const { data: existingDevice, error: existingDeviceError } = await supabaseAdmin
+      .from("user_devices")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("device_id", device_id)
+      .maybeSingle();
+
+    console.log("VERIFY EXISTING DEVICE:", existingDevice);
+    console.log("VERIFY EXISTING DEVICE ERROR:", existingDeviceError);
+
+    if (existingDeviceError) {
+      return jsonResponse({ error: existingDeviceError.message }, 500);
+    }
+
+    if (existingDevice?.id) {
+      const { error: updateDeviceError } = await supabaseAdmin
+        .from("user_devices")
+        .update({
+          device_name: device_name ?? null,
+          user_agent: user_agent ?? null,
+          browser: browser ?? null,
+          browser_version: browser_version ?? null,
+          os: os ?? null,
+          os_version: os_version ?? null,
+          platform: platform ?? null,
+          screen_resolution: screen_resolution ?? null,
+          timezone: timezone ?? null,
+          language: language ?? null,
+          last_ip: ipAddress,
+          last_geo_json: geoJson,
+          last_seen_at: new Date().toISOString(),
+          branch_approved: true,
+          approved_at: new Date().toISOString(),
+          approved_by_email: otpRow.sent_to_email,
+          is_active: true,
+        })
+        .eq("id", existingDevice.id);
+
+      if (updateDeviceError) {
+        return jsonResponse({ error: updateDeviceError.message }, 500);
+      }
+    } else {
+      const { error: insertDeviceError } = await supabaseAdmin.from("user_devices").insert({
+        user_id: user.id,
+        device_id,
+        device_name: device_name ?? null,
+        user_agent: user_agent ?? null,
+        browser: browser ?? null,
+        browser_version: browser_version ?? null,
+        os: os ?? null,
+        os_version: os_version ?? null,
+        platform: platform ?? null,
+        screen_resolution: screen_resolution ?? null,
+        timezone: timezone ?? null,
+        language: language ?? null,
+        first_ip: ipAddress,
+        first_geo_json: geoJson,
+        first_seen_at: new Date().toISOString(),
+        last_ip: ipAddress,
+        last_geo_json: geoJson,
+        last_seen_at: new Date().toISOString(),
+        branch_approved: true,
+        approved_at: new Date().toISOString(),
+        approved_by_email: otpRow.sent_to_email,
+        is_active: true,
+      });
+
+      if (insertDeviceError) {
+        return jsonResponse({ error: insertDeviceError.message }, 500);
+      }
+    }
+
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .update({ first_login_completed: true })
+      .eq("id", user.id);
+
+    if (profileError) {
+      return jsonResponse({ error: profileError.message }, 500);
+    }
+
+    await supabaseAdmin.from("login_audit_logs").insert({
+      user_id: user.id,
+      email: user.email,
+      event_type: "otp_verification",
+      result: "success",
+      reason: "New device approved",
+      device_id,
+      ip_address: ipAddress,
+      geo_json: geoJson,
+      user_agent: user_agent ?? null,
+    });
+
+    return jsonResponse({
+      success: true,
+      device_approved: true,
+    });
+  } catch (err) {
+    console.log("VERIFY DEVICE OTP ERROR:", err);
+    return jsonResponse({ error: String(err) }, 500);
+  }
+});

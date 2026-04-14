@@ -25,6 +25,7 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   if (session && !otpPending && !otpStep && !authFlowInProgress) {
     return <Navigate to="/" replace />;
@@ -126,67 +127,140 @@ async function handleSubmit(e) {
   }
 }
 
-  async function handleVerifyOtp(e) {
-    e.preventDefault();
+async function handleVerifyOtp(e) {
+  e.preventDefault();
 
-    if (!otp.trim()) {
-      setErrorMsg("Please enter the OTP.");
+  if (!otp.trim()) {
+    setErrorMsg("Please enter the OTP.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setErrorMsg("");
+
+    const {
+      data: { session: currentSession },
+    } = await supabase.auth.getSession();
+
+    if (!currentSession?.access_token) {
+      setErrorMsg("Your session expired. Please log in again.");
       return;
     }
 
-    try {
-      setLoading(true);
-      setErrorMsg("");
+    const deviceInfo = getDeviceInfo();
 
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
-
-      if (!currentSession?.access_token) {
-        setErrorMsg("Your session expired. Please log in again.");
-        return;
+    const verifyRes = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-device-otp`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+        body: JSON.stringify({
+          ...deviceInfo,
+          otp: otp.trim(),
+        }),
       }
+    );
 
-      const deviceInfo = getDeviceInfo();
+    const verifyResult = await verifyRes.json();
 
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-device-otp`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${currentSession.access_token}`,
-          },
-          body: JSON.stringify({
-            ...deviceInfo,
-            otp: otp.trim(),
-          }),
-        }
-      );
-
-      const result = await res.json();
-      
-
-      if (!res.ok) {
-        setErrorMsg(result.error || "OTP verification failed.");
-        return;
-      }
-
-      if (result.success) {
-        setOtpPending(false);
-        setOtpStep(false);
-        setOtp("");
-        navigate(from, { replace: true });
-        return;
-      }
-
-      setErrorMsg("Unexpected OTP response.");
-    } catch (err) {
-      setErrorMsg("Something went wrong during OTP verification.");
-    } finally {
-      setLoading(false);
+    if (!verifyRes.ok) {
+      setErrorMsg(verifyResult.error || verifyResult.message || "OTP verification failed.");
+      return;
     }
+
+    if (!verifyResult.success || !verifyResult.requires_geolocation) {
+      setErrorMsg("Unexpected OTP response.");
+      return;
+    }
+
+    setGeoLoading(true);
+
+    let coords;
+    try {
+      coords = await getBrowserLocation();
+    } catch (geoErr) {
+      await supabase.auth.signOut();
+      setOtpPending(false);
+      setOtpStep(false);
+      setAuthFlowInProgress(false);
+      setOtp("");
+      setOtpMaskedEmail("");
+      setGeoLoading(false);
+
+      setErrorMsg("Location access is required on first login for a new device.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    const finalizeRes = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/finalize-device-approval`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+        body: JSON.stringify({
+          device_id: deviceInfo.device_id,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
+      }
+    );
+
+    const finalizeResult = await finalizeRes.json();
+
+    if (!finalizeRes.ok) {
+      setErrorMsg(finalizeResult.error || "Failed to save location.");
+      return;
+    }
+
+    if (finalizeResult.success) {
+      setOtpPending(false);
+      setOtpStep(false);
+      setOtp("");
+      navigate(from, { replace: true });
+      return;
+    }
+
+    setErrorMsg("Unexpected location approval response.");
+  } catch (err) {
+    setErrorMsg("Something went wrong during OTP verification.");
+  } finally {
+    setLoading(false);
+    setGeoLoading(false);
   }
+}
+
+  function getBrowserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        reject(error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
 
   async function handleCancelOtp() {
     await supabase.auth.signOut();
@@ -312,9 +386,10 @@ async function handleSubmit(e) {
             >
               <p className="mr-auto text-sm text-gray-600">Interactive</p>
 
-              <div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                This is a new device. Please enter the OTP sent to your branch email.
-              </div>
+<div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+  This is a new device. After OTP verification, you must allow location access to continue.
+  If you deny location, you will be returned to the login page.
+</div>
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="otp" className="text-sm font-medium">
@@ -353,7 +428,7 @@ async function handleSubmit(e) {
                       : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
                   }`}
               >
-                {loading ? "Verifying..." : "Verify OTP"}
+                {loading || geoLoading ? "Verifying..." : "Verify OTP"}
               </button>
 
               <button

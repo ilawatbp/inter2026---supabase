@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useAuth } from "./AuthContext";
+import { v4 as uuidv4 } from "uuid";
 
 const ShopContext = createContext();
 
@@ -15,7 +16,7 @@ export function ShopProvider({ children }) {
   const defaultRowsService = useMemo(
     () => [
       {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         serviceType: "",
         amount: 0,
         scopes: [""],
