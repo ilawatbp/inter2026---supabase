@@ -11,7 +11,7 @@ export default function CartHead() {
     quoteStatus,
   } = useShop();
   const { branch } = useAuth();
-
+  console.log(branch)
   return (
     <>
       {/* Header Part */}

@@ -339,6 +339,12 @@ export default function CartNav({ setCartView, cartView, printRef }) {
         return;
       }   
 
+      if (quoteDetails?.designationOfUser.trim() === '' || quoteDetails?.prepby.trim() === ''){
+        setOpenErrorModal(true);
+        setErrorMsg("Please indicate who prepared this quotation.");
+        return;
+      }
+
       setOpenSaveModal(true);
       return;
     }

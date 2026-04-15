@@ -38,8 +38,8 @@ export default function SignOff(){
           disabled={quoteStatus ==="locked"}
     />
 
-
-
+{
+}
 
   </div>
 </section>

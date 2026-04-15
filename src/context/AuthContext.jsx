@@ -95,11 +95,26 @@ export function AuthProvider({ children }) {
           status,
           designation,
           branch_id,
-          branches (*)
+          branches (
+            id,
+            branch_code,
+            branch_name,
+            branch_email,
+            branch_contact_no,
+            company_name,
+            address,
+             branch_bank_accounts (
+              id,
+              bank_name,
+              account_name,
+              account_number
+              )
+          )
         `)
         .eq("id", session.user.id)
         .single();
-
+      
+      
       if (!mounted) return;
 
       if (error) {
