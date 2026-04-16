@@ -129,6 +129,8 @@ export function AuthProvider({ children }) {
       setProfileLoading(false);
     }
 
+
+
     loadProfile();
 
     return () => {

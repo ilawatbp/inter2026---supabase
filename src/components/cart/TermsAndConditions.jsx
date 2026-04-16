@@ -1,9 +1,12 @@
 import { useShop } from "../../context/ShopContext";
+import { useAuth } from "../../context/AuthContext";
 export default function TermsAndConditions({ viewMode }) {
   // viewmode="serviceForm" or "quotationForm
 
   const { handleCustomerDetailsOnchange, quoteDetails, quoteStatus } =
     useShop();
+  
+  const { branch } = useAuth();
 
   const diffInMs =
     new Date(quoteDetails.validUntil) - new Date(quoteDetails.Qdate);
@@ -42,23 +45,31 @@ export default function TermsAndConditions({ viewMode }) {
         </div>
 
         {/* Bank details (indented like screenshot) */}
-        <div className="grid grid-cols-[190px_1fr] gap-4">
-          <div />
-          <div className="space-y-1">
-            <div className="grid grid-cols-[120px_1fr]">
-              <div className="font-semibold">Bank Name</div>
-              <div>: Phil. Business Bank</div>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <div className="font-semibold">Account</div>
-              <div>: ILAW AND ELECTRICAL DEPOT CORP.</div>
-            </div>
-            <div className="grid grid-cols-[120px_1fr]">
-              <div className="font-semibold">Account No</div>
-              <div>: 0020000011828</div>
-            </div>
-          </div>
-        </div>
+        {branch?.branch_bank_accounts.map(({ account_name, account_number, bank_name, id }) => {
+          return (
+            
+              <div key={id} className="grid grid-cols-[190px_1fr] gap-4">
+                <div />
+                <div className="space-y-1">
+                  <div className="grid grid-cols-[120px_1fr]">
+                    <div className="font-semibold">Bank Name</div>
+                    <div>: {bank_name}</div>
+                  </div>
+                  <div className="grid grid-cols-[120px_1fr]">
+                    <div className="font-semibold">Account</div>
+                    <div>: {account_name}</div>
+                  </div>
+                  <div className="grid grid-cols-[120px_1fr]">
+                    <div className="font-semibold">Account No</div>
+                    <div>: {account_number}</div>
+                  </div>
+                </div>
+              </div>
+          );
+        })}
+
+        
+        
 
         {/* 4 */}
         <div className="grid grid-cols-[190px_1fr] gap-4">

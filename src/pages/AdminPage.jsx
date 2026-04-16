@@ -5,6 +5,7 @@ import { HousePlus, Store, UserRoundPlus, UserRoundSearch, Image } from "lucide-
 import AddBranch from "../components/admin/AddBranch";
 import BranchList from "../components/admin/BranchList";
 import AddUser from "../components/admin/AddUser";
+import UserList from "../components/admin/UserList";
 import ImageUploader from "../components/admin/ImageUploader";
 
 export default function AdminPage() {
@@ -184,10 +185,7 @@ export default function AdminPage() {
             }
           `}
         >
-          <div className="bg-white h-full w-full rounded-2xl p-8 overflow-auto">
-            <h2 className="text-2xl font-bold mb-6">Users</h2>
-            <p>User list placeholder</p>
-          </div>
+<UserList />
         </div>
 
         <div

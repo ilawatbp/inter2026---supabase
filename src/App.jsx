@@ -4,12 +4,14 @@ import CartPage from './components/cart/CartPage'
 import PrestigePage from './pages/PretigePage';
 import Login from './pages/Login';
 import AdminPage from './pages/AdminPage';
+import UpdatePassword from './pages/UpdatePassword';
 
 import { Routes, Route } from "react-router-dom";
 
 import UserOnlyRoute from './routes/UserOnlyRoute';
 import AdminOnlyRoute from './routes/AdminOnlyRoute';
 import RoleHomeRedirect from './routes/RoleHomeRedirect';
+
 import { useEffect } from 'react';
 
 function App() {
@@ -37,6 +39,7 @@ function App() {
     <div className='bg-[#f8f8f8] min-h-screen'>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
         <Route path="/" element={<RoleHomeRedirect />} />
 
         <Route element={<UserOnlyRoute />}>
