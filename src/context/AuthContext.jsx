@@ -26,6 +26,24 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function forceLocalLogout() {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (e) {
+      console.error("Sign out error:", e);
+    }
+
+    setSession(null);
+    setProfile(null);
+    setBranch(null);
+    setOtpPending(false);
+
+    localStorage.clear();
+    sessionStorage.removeItem(OTP_PENDING_KEY);
+
+    window.location.href = "/login";
+  }
+
   // 1) Load auth session on app start
   useEffect(() => {
     let mounted = true;
@@ -95,6 +113,7 @@ export function AuthProvider({ children }) {
           status,
           designation,
           branch_id,
+          force_logout,
           branches (
             id,
             branch_code,
@@ -103,18 +122,17 @@ export function AuthProvider({ children }) {
             branch_contact_no,
             company_name,
             address,
-             branch_bank_accounts (
+            branch_bank_accounts (
               id,
               bank_name,
               account_name,
               account_number
-              )
+            )
           )
         `)
         .eq("id", session.user.id)
         .single();
-      
-      
+
       if (!mounted) return;
 
       if (error) {
@@ -122,14 +140,24 @@ export function AuthProvider({ children }) {
         setProfile(null);
         setBranch(null);
       } else {
+        // force logout immediately if admin flagged this user
+        if (data?.force_logout === true || data?.status !== "active") {
+          await forceLocalLogout();
+          return;
+        }
+
         setProfile(data);
         setBranch(data?.branches ?? null);
+
+        // optional: reset force_logout after successful profile load
+        await supabase
+          .from("profiles")
+          .update({ force_logout: false })
+          .eq("id", session.user.id);
       }
 
       setProfileLoading(false);
     }
-
-
 
     loadProfile();
 
@@ -138,8 +166,37 @@ export function AuthProvider({ children }) {
     };
   }, [session]);
 
+  // 3) Watch own profile for forced logout in realtime
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const channel = supabase
+      .channel(`profile-watch-${session.user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${session.user.id}`,
+        },
+        async (payload) => {
+          const newRow = payload.new;
+
+          if (newRow?.force_logout === true || newRow?.status !== "active") {
+            await forceLocalLogout();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
+
   async function signOut() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: "local" });
 
     if (error) {
       setError(error.message);
@@ -150,6 +207,11 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setBranch(null);
     setOtpPending(false);
+
+    localStorage.clear();
+    sessionStorage.removeItem(OTP_PENDING_KEY);
+
+    window.location.href = "/login";
   }
 
   return (

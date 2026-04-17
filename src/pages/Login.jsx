@@ -343,13 +343,13 @@ async function handleVerifyOtp(e) {
                     autoComplete="current-password"
                   />
 
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-black"
                   >
                     {showPassword ? "Hide" : "Show"}
-                  </button>
+                  </button> */}
                 </div>
               </div>
 

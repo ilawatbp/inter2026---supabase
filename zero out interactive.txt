@@ -1,0 +1,11 @@
+zero out interactive
+
+
+TRUNCATE TABLE
+  public.quotation_items,
+  public.quotation_headers,
+  public.branch_quote_counters,
+  public.service_quotation_lines,
+  public.service_quotation_headers,
+  public.service_branch_quote_counters
+RESTART IDENTITY CASCADE;

@@ -167,6 +167,22 @@ async function handleSendPasswordReset(user) {
   setMsg(`Password reset email sent to ${user.email}`);
 }
 
+
+async function forceLogoutUser(userId) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({ force_logout: true })
+    .eq("id", userId)
+
+  if (error) {
+    console.error(error)
+    alert(error.message)
+    return
+  }
+
+  alert("User forced logout triggered.")
+}
+
   return (
     <div className="w-full text-white">
       <div className="flex items-center justify-between mb-4">
@@ -242,6 +258,13 @@ async function handleSendPasswordReset(user) {
                         className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white transition"
                       >
                         Change Password
+                      </button>
+
+                      <button
+                        onClick={() => forceLogoutUser(user.id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+                      >
+                        Kick User
                       </button>
                     </div>
                   </td>

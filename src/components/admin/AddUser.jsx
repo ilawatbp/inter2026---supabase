@@ -123,7 +123,6 @@ export default function AddUser() {
             value={formData.fullname}
             onChange={handleChange}
             className="w-full border rounded-xl px-4 py-3 text-black"
-            required
           />
         </div>
 
