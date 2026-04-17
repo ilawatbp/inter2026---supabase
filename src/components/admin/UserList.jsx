@@ -321,7 +321,7 @@ async function forceLogoutUser(userId) {
                 >
                   <option value="">Select role</option>
                   <option value="admin">admin</option>
-                  <option value="user">user</option>
+                  <option value="staff">staff</option>
                 </select>
               </div>
 
