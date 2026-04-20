@@ -12,6 +12,58 @@ export default function TermsAndConditions({ viewMode }) {
     new Date(quoteDetails.validUntil) - new Date(quoteDetails.Qdate);
   const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
 
+    function numberToWords(num) {
+    const ones = [
+      "Zero",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen",
+    ];
+
+    const tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety",
+    ];
+
+    if (num < 20) return ones[num];
+    if (num < 100) {
+      return tens[Math.floor(num / 10)] + (num % 10 ? `-${ones[num % 10]}` : "");
+    }
+    if (num < 1000) {
+      return (
+        ones[Math.floor(num / 100)] +
+        " Hundred" +
+        (num % 100 ? ` ${numberToWords(num % 100)}` : "")
+      );
+    }
+
+    return String(num);
+  }
+
   return (
     <section className="mt-6 text-[10px] leading-tight page-break">
       <h2 className="font-semibold underline mb-3">Terms and Conditions</h2>
@@ -75,7 +127,7 @@ export default function TermsAndConditions({ viewMode }) {
         <div className="grid grid-cols-[190px_1fr] gap-4">
           <div className="font-semibold">4. Validity Period:</div>
           <div>
-            This quotation is valid for Seven ({diffInDays}) days only. Kindly
+            This quotation is valid for {numberToWords(diffInDays)} ({diffInDays}) days only. Kindly
             request a new quotation thereafter.
           </div>
         </div>
