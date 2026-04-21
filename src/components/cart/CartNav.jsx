@@ -318,73 +318,101 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   }
 
   function handleSave() {
-    if (cartView === "form") {
-      if (cartValue.length === 0) {
-        setOpenErrorModal(true);
-        setErrorMsg("Please Add Atleast one Item");
-        return;
-      }
+  const isFakeValue = (value) => {
+    const cleaned = (value || "").trim();
+    if (cleaned === "") return true;
+    return /^[-.]+$/.test(cleaned);
+  };
 
-      for (const item of cartValue) {
-        if (item.Quantity == 0) {
-          setOpenErrorModal(true);
-          setErrorMsg("all items must be atles one quant");
-          return;
-        }
-      }
-
-      if (quoteDetails.Attn === "" || quoteDetails.Comp === "") {
-        setOpenErrorModal(true);
-        setErrorMsg("Please Complete the Customer Details");
-        return;
-      }   
-
-      if (quoteDetails?.designationOfUser.trim() === '' || quoteDetails?.prepby.trim() === ''){
-        setOpenErrorModal(true);
-        setErrorMsg("Please indicate who prepared this quotation.");
-        return;
-      }
-
-      setOpenSaveModal(true);
+  if (cartView === "form") {
+    if (cartValue.length === 0) {
+      setOpenErrorModal(true);
+      setErrorMsg("Please add at least one item.");
       return;
     }
 
-    if (cartView === "serviceForm") {
-      const cleanedRowsService = rowsService.filter((row) => {
-        const hasServiceType = row.serviceType?.trim();
-        const hasAmount = Number(row.amount) > 0;
-        const hasScopes = row.scopes?.some((scope) => scope.trim() !== "");
-
-        return hasServiceType || hasAmount || hasScopes;
-      });
-
-      if (cleanedRowsService.length === 0) {
+    for (const item of cartValue) {
+      if (Number(item.Quantity) <= 0) {
         setOpenErrorModal(true);
-        setErrorMsg("Please add at least one service row");
+        setErrorMsg("All items must have at least quantity of 1.");
         return;
       }
-
-      if (quoteDetails.Attn === "" || quoteDetails.Comp === "") {
-        setOpenErrorModal(true);
-        setErrorMsg("Please Complete the Customer Details");
-        return;
-      }
-
-         
-
-        const hasEmptyScope = rowsService.some(({scopes})=>
-          scopes.some((scope)=> scope.trim() === '')
-        );
-
-        if (hasEmptyScope) {
-              setOpenErrorModal(true);
-              setErrorMsg("Please Complete the Scope Details");
-              return;
-        }
-
-      setOpenSaveModal(true);
     }
+
+    const attnValue = quoteDetails.Attn || "";
+    const compValue = quoteDetails.Comp || "";
+    const designationValue = quoteDetails.designationOfUser || "";
+    const prepByValue = quoteDetails.prepby || "";
+
+    if (isFakeValue(attnValue) || isFakeValue(compValue)) {
+      setOpenErrorModal(true);
+      setErrorMsg(
+        "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
+      );
+      return;
+    }
+
+    if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
+      setOpenErrorModal(true);
+      setErrorMsg(
+        "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
+      );
+      return;
+    }
+
+    setOpenSaveModal(true);
+    return;
   }
+
+  if (cartView === "serviceForm") {
+    const cleanedRowsService = rowsService.filter((row) => {
+      const hasServiceType = row.serviceType?.trim();
+      const hasAmount = Number(row.amount) > 0;
+      const hasScopes = row.scopes?.some((scope) => scope.trim() !== "");
+
+      return hasServiceType || hasAmount || hasScopes;
+    });
+
+    if (cleanedRowsService.length === 0) {
+      setOpenErrorModal(true);
+      setErrorMsg("Please add at least one service row.");
+      return;
+    }
+
+    const attnValue = quoteDetails.Attn || "";
+    const compValue = quoteDetails.Comp || "";
+    const designationValue = quoteDetails.designationOfUser || "";
+    const prepByValue = quoteDetails.prepby || "";
+
+    if (isFakeValue(attnValue) || isFakeValue(compValue)) {
+      setOpenErrorModal(true);
+      setErrorMsg(
+        "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
+      );
+      return;
+    }
+
+    if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
+      setOpenErrorModal(true);
+      setErrorMsg(
+        "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
+      );
+      return;
+    }
+
+    const hasEmptyScope = rowsService.some(({ scopes = [] }) =>
+      scopes.some((scope) => scope.trim() === "")
+    );
+
+    if (hasEmptyScope) {
+      setOpenErrorModal(true);
+      setErrorMsg("Please complete the Scope Details.");
+      return;
+    }
+
+    setOpenSaveModal(true);
+  }
+}
 
   function handleClear() {
     if (cartView === "serviceForm") {
