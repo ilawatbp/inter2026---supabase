@@ -91,6 +91,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
       notes: item.Rem ?? null,
       quantity: Number(item.Quantity ?? 0),
       unit_price: Number(item.SRP ?? 0),
+      orgl_unit_price: Number(item.Org_SRP ?? 0),
       discount_percent: Number(item.Discount ?? 0),
       line_total: Number(item.LineTotal ?? 0),
     }));

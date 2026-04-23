@@ -19,7 +19,7 @@ function getItemImageUrl(itemcode) {
 
 export default function ItemTable({ p, openDelModal, calculatePrice }) {
 
-  const { setCartValue, quoteStatus } = useShop();
+  const { cartValue, setCartValue, quoteStatus } = useShop();
 
   const {
     attributes,
@@ -32,6 +32,8 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
     id: p.uid,
     disabled: quoteStatus === "locked",
   });
+
+  console.log(cartValue)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -127,7 +129,12 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
 
       {/* SRP */}
       <td className="py-2 text-right align-middle">
-        {Number(p.SRP).toLocaleString()}
+        <input type="number" min="0" className={`no-spinner text-center w-[50px] p-2  bg-white ${quoteStatus !== "locked" && "border-b"}`}
+          value={Number(p.SRP ?? 0)}
+          onChange={(e) => handleChange(p.uid, "SRP", e.target.value)}
+          disabled={quoteStatus === "locked"}
+        />
+        {/* {Number(p.SRP).toLocaleString()} */}
       </td>
 
       {/* Total */}

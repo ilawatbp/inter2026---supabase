@@ -372,12 +372,12 @@ async function handleVerifyOtp(e) {
                 {loading ? "Signing in..." : "Sign in"}
               </button>
 
-              <Link
+              {/* <Link
                 to="/forgot-password"
                 className="ml-auto text-sm cursor-pointer hover:font-bold"
               >
                 Forgot password?
-              </Link>
+              </Link> */}
             </form>
           ) : (
             <form

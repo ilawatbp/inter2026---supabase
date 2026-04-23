@@ -17,6 +17,7 @@ export default function ModalCart({ propshow, selectedItem }) {
         Discount: discountValue.current.value,
         itemname:`${item.itemname}`,
         SRP: `${item.price}`,
+        Org_SRP: `${item.price}`,
         Area: `${areaValue.current.value}`,
         Rem: `${noteValue.current.value}`,
       },

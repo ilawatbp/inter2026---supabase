@@ -98,6 +98,7 @@ export default function CartHistory({ setCartView }) {
           Rem: item.notes ?? "",
           Quantity: Number(item.quantity ?? 0),
           SRP: Number(item.unit_price ?? 0),
+          Org_SRP: Number(item.orgl_unit_price ?? 0),
           Discount: Number(item.discount_percent ?? 0)
         }))
       );
