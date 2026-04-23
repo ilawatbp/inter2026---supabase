@@ -33,8 +33,6 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
     disabled: quoteStatus === "locked",
   });
 
-  console.log(cartValue)
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,

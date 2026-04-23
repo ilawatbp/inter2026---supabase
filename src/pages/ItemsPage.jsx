@@ -11,6 +11,11 @@ import ModalCart from "../components/ModalCart";
 
 import SkelitonCard from "../components/SkelitonCard";
 
+import { useAuth } from "../context/AuthContext";
+
+
+
+
 function getItemImageUrl(itemcode) {
   if (!itemcode) return notavail;
 
@@ -21,8 +26,38 @@ function getItemImageUrl(itemcode) {
   return data?.publicUrl || notavail;
 }
 
+//TO DETERMINE WHAT IS THE CLASSIFICTION OF ITEM
+function classification(num){
+  if (num == 1){
+    return "PHASE OUT"
+  }
+  if (num == 2){
+    return "NON MOVING"
+  }
+  if (num == 3){
+    return "SLOW MOVING"
+  }
+  if (num == 4){
+    return "NEED"
+  }
+}
+
+//TO DETERMINE WHO CAN VIEW THE ITEM
+function interClass(num){
+  if(num == 0) {
+    return "NOT INTERACTIVE"
+  }
+  if(num == 1) {
+    return "ALL INTERACTIVE"
+  }
+  if(num == 2) {
+    return "BRANCH ONLY"
+  }
+}
+
 /** Card extracted + memoized to reduce re-renders */
-const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
+const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart, userProfile }) {
+  console.log(itm)
   return (
     <div
       className="
@@ -60,11 +95,23 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart }) {
           className="flex justify-between items-center"
           onClick={(e) => e.stopPropagation()}
         >
+        
+          {userProfile.role === "viewer" && (
+            <div>
+              <p>{itm.itemcode}</p>
+              <p>Item Classification: {classification(itm.u_item_classification)}</p>
+              <p>Interactive Stat: {interClass(itm.u_interactive)}</p>
+            </div>
+          )}
           <div className={`h-1 w-1 rounded-full ${itm.promo?.pm_discval && "bg-green-300"}`}></div>
-          <ShoppingBag
-            className="text-[#3cb54c] cursor-pointer h-5 w-5 "
-            onClick={() => onAddToCart(itm)}
-          />
+
+          {userProfile.role !== "viewer" && (
+            <ShoppingBag
+              className="text-[#3cb54c] cursor-pointer h-5 w-5 "
+              onClick={() => onAddToCart(itm)}
+            />
+          )}
+
         </div>
       </div>
     </div>
@@ -86,52 +133,54 @@ export default function ItemsPage() {
   const [openCartModal, setOpenCartModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false)
 
+  const { profile } = useAuth();
+
   useEffect(() => {
     let ignore = false;
     let timeoutId;
 
     async function loadItems() {
-  setError("");
-  setIsLoading(true);
+      setError("");
+      setIsLoading(true);
 
-  if (!query && !groupQuery && !smartQuery) {
-    setItems([]);
-    setIsLoading(false);
-    return;
-  }
+      if (!query && !groupQuery && !smartQuery) {
+        setItems([]);
+        setIsLoading(false);
+        return;
+      }
 
-  // =========================
-  // SMART SEARCH MODE
-  // =========================
-  if (smartQuery) {
-    const { data: smartData, error: smartError } = await supabase.functions.invoke("smart-search", {
-      body: {
-        search: smartQuery,
-        matchCount: 24,
-        matchThreshold: 0.2,
-      },
-    });
+      // =========================
+      // SMART SEARCH MODE
+      // =========================
+      if (smartQuery) {
+        const { data: smartData, error: smartError } = await supabase.functions.invoke("smart-search", {
+          body: {
+            search: smartQuery,
+            matchCount: 24,
+            matchThreshold: 0.2,
+          },
+        });
 
-    if (ignore) return;
+        if (ignore) return;
 
-    if (smartError) {
-      setError(smartError.message || "Smart search failed.");
-      setItems([]);
-      setIsLoading(false);
-      return;
-    }
+        if (smartError) {
+          setError(smartError.message || "Smart search failed.");
+          setItems([]);
+          setIsLoading(false);
+          return;
+        }
 
-    const matchedCodes = (smartData?.results || []).map((row) => row.itemcode);
+        const matchedCodes = (smartData?.results || []).map((row) => row.itemcode);
 
-    if (!matchedCodes.length) {
-      setItems([]);
-      setIsLoading(false);
-      return;
-    }
+        if (!matchedCodes.length) {
+          setItems([]);
+          setIsLoading(false);
+          return;
+        }
 
-    const { data: fullItems, error: fullItemsError } = await supabase
-      .from("items")
-      .select(`
+        const { data: fullItems, error: fullItemsError } = await supabase
+          .from("items")
+          .select(`
         itemcode,
         itemname,
         price,
@@ -139,75 +188,77 @@ export default function ItemsPage() {
           pm_discval
         )
       `)
-      .in("itemcode", matchedCodes);
+          .in("itemcode", matchedCodes);
 
-    if (ignore) return;
+        if (ignore) return;
 
-    if (fullItemsError) {
-      setError(fullItemsError.message);
-      setItems([]);
-      setIsLoading(false);
-      return;
-    }
+        if (fullItemsError) {
+          setError(fullItemsError.message);
+          setItems([]);
+          setIsLoading(false);
+          return;
+        }
 
-    // preserve smart-search ranking order
-    const sortedItems = matchedCodes
-      .map((code) => fullItems.find((item) => item.itemcode === code))
-      .filter(Boolean);
+        // preserve smart-search ranking order
+        const sortedItems = matchedCodes
+          .map((code) => fullItems.find((item) => item.itemcode === code))
+          .filter(Boolean);
 
-    setItems(sortedItems);
+        setItems(sortedItems);
 
-    timeoutId = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+        timeoutId = setTimeout(() => {
+          setIsLoading(false);
+        }, 1000);
 
-    return;
-  }
+        return;
+      }
 
-  // =========================
-  // NORMAL / GROUP SEARCH MODE
-  // =========================
-  let dbQuery = supabase
-    .from("items")
-    .select(`
+      // =========================
+      // NORMAL / GROUP SEARCH MODE
+      // =========================
+      let dbQuery = supabase
+        .from("items")
+        .select(`
       itemcode,
       itemname,
       price,
       activeqrygroup,
+      u_item_classification,
+      u_interactive,
       promo:promo_discount (
         pm_discval
       )
     `)
-    .order("price", { ascending: false });
+        .order("price", { ascending: false });
 
-  if (query) {
-    dbQuery = dbQuery.or(
-      `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
-    );
-  }
+      if (query) {
+        dbQuery = dbQuery.or(
+          `itemcode.ilike.%${query}%,itemname.ilike.%${query}%`
+        );
+      }
 
-  if (groupQuery) {
-    dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
-  }
+      if (groupQuery) {
+        dbQuery = dbQuery.eq("activeqrygroup", groupQuery);
+      }
 
-  dbQuery = dbQuery.order("itemname", { ascending: true });
+      dbQuery = dbQuery.order("itemname", { ascending: true });
 
-  const { data, error } = await dbQuery;
+      const { data, error } = await dbQuery;
 
-  if (ignore) return;
+      if (ignore) return;
 
-  if (error) {
-    setError(error.message);
-    setItems([]);
-    setIsLoading(false);
-    return;
-  }
+      if (error) {
+        setError(error.message);
+        setItems([]);
+        setIsLoading(false);
+        return;
+      }
 
-  setItems(data || []);
-  timeoutId = setTimeout(() => {
-    setIsLoading(false);
-  }, 1000);
-}
+      setItems(data || []);
+      timeoutId = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    }
 
     loadItems();
 
@@ -215,7 +266,7 @@ export default function ItemsPage() {
       ignore = true;
       if (timeoutId) clearTimeout(timeoutId);
     };
-}, [query, groupQuery, smartQuery]);
+  }, [query, groupQuery, smartQuery]);
 
 
   useEffect(() => {
@@ -247,16 +298,16 @@ export default function ItemsPage() {
         <div className="flex-1 overflow-auto scrollbar-hide z-10">
           <div className="w-full px-10 md:px-20 py-4 pt-20 md:pt-36 flex gap-4 flex-wrap justify-evenly">
             {!isLoading && smartQuery && (
-  <div className="w-full mb-2 text-sm text-gray-500">
-    Smart search results for: <span className="font-medium">{smartQuery}</span>
-  </div>
-)}
+              <div className="w-full mb-2 text-sm text-gray-500">
+                Smart search results for: <span className="font-medium">{smartQuery}</span>
+              </div>
+            )}
 
-{!isLoading && query && !smartQuery && (
-  <div className="w-full mb-2 text-sm text-gray-500">
-    Search results for: <span className="font-medium">{query}</span>
-  </div>
-)}
+            {!isLoading && query && !smartQuery && (
+              <div className="w-full mb-2 text-sm text-gray-500">
+                Search results for: <span className="font-medium">{query}</span>
+              </div>
+            )}
             {!isLoading && items.length === 0 ? (
               <div className="w-full flex justify-center items-center py-20">
                 <p className="text-gray-500 text-lg font-medium">No items found.</p>
@@ -268,6 +319,7 @@ export default function ItemsPage() {
                   itm={itm}
                   onOpen={handleOpen}
                   onAddToCart={handleAddToCart}
+                  userProfile={profile}
                 />
               ))
             )}
@@ -298,6 +350,7 @@ export default function ItemsPage() {
                 <div className="mt-10 flex items-center justify-center">
                   <PhilippinePeso className="h-4 w-4" />
                   <p>{selectedItem.price.toLocaleString()}</p>
+                  {profile.role !== "viewer" && (
                   <ShoppingBag
                     className="text-[#3cb54c] cursor-pointer ml-auto h-5 w-5"
                     onClick={() => {
@@ -305,6 +358,8 @@ export default function ItemsPage() {
                       handleAddToCart(selectedItem);
                     }}
                   />
+                  )}
+
                 </div>
               </div>
             </div>

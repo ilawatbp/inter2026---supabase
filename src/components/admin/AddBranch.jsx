@@ -240,7 +240,6 @@ export default function AddBranch() {
 
   return (
     <>
-    {console.log(branchData)}
       <form onSubmit={handleCreateBranch} className="mb-8 space-y-5">
         <h2 className="text-xl font-semibold">Create Branch</h2>
 
