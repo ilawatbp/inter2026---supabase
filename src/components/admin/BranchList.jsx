@@ -13,6 +13,7 @@ export default function BranchList() {
     branch_email: "",
     address: "",
     branch_contact_no: "",
+    store_type:"",
     is_active: true,
 
     bank_account_id: null,
@@ -61,6 +62,7 @@ export default function BranchList() {
       branch_email: branch.branch_email || "",
       address: branch.address || "",
       branch_contact_no: branch.branch_contact_no || "",
+      store_type: branch.store_type || "",
       is_active: branch.is_active ?? true,
 
       bank_account_id: bank?.id || null,
@@ -111,6 +113,7 @@ export default function BranchList() {
         branch_email: editData.branch_email,
         address: editData.address,
         branch_contact_no: editData.branch_contact_no,
+        store_type: editData.store_type,
         is_active: editData.is_active,
       })
       .eq("id", branchId);
@@ -234,6 +237,16 @@ export default function BranchList() {
                     className="w-full p-2 rounded text-black"
                   />
 
+                  <select
+                    name="store_type"
+                    className="border p-2 rounded w-full text-black"
+                    value={editData.store_type}
+                    onChange={handleChange}
+                  >
+                    <option value="company">Company</option>
+                    <option value="franchise">Franchise</option>
+                  </select>
+
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -300,6 +313,7 @@ export default function BranchList() {
                     <p><strong>Email:</strong> {branch.branch_email}</p>
                     <p><strong>Address:</strong> {branch.address}</p>
                     <p><strong>Contact:</strong> {branch.branch_contact_no}</p>
+                    <p><strong>Store Type:</strong> {branch.store_type}</p>
                     <p><strong>Status:</strong> {branch.is_active ? "Active" : "Inactive"}</p>
 
                     <div className="mt-3">

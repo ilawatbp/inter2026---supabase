@@ -320,8 +320,9 @@ async function forceLogoutUser(userId) {
                   className="w-full rounded-lg border border-white/10 bg-[#111827] px-3 py-2 outline-none"
                 >
                   <option value="">Select role</option>
-                  <option value="admin">admin</option>
                   <option value="staff">staff</option>
+                  <option value="viewer">viewer</option>
+                  <option value="admin">admin</option>
                 </select>
               </div>
 

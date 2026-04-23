@@ -141,7 +141,7 @@ export default function AddBranch() {
           branch_email: branch_email.trim(),
           address: address.trim(),
           branch_contact_no: branch_contact_no.trim(),
-          store_type: store_type.trim(),
+          store_type: store_type,
           is_active: true,
         })
         .select("id, branch_name")

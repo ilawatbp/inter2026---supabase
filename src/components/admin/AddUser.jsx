@@ -153,6 +153,7 @@ export default function AddUser() {
             className="w-full border rounded-xl px-4 py-3 text-black"
           >
             <option value="staff">staff</option>
+            <option value="viewer">viewer</option>
             <option value="admin">admin</option>
           </select>
         </div>
