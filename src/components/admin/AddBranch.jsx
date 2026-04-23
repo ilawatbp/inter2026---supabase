@@ -13,6 +13,7 @@ export default function AddBranch() {
     branch_email: "",
     address: "",
     branch_contact_no: "",
+    store_type:"",
   });
 
   const [bankAccounts, setBankAccounts] = useState([
@@ -85,6 +86,7 @@ export default function AddBranch() {
       branch_email,
       address,
       branch_contact_no,
+      store_type,
     } = branchData;
 
     if (!branch_code.trim() || !branch_name.trim()) {
@@ -139,6 +141,7 @@ export default function AddBranch() {
           branch_email: branch_email.trim(),
           address: address.trim(),
           branch_contact_no: branch_contact_no.trim(),
+          store_type: store_type.trim(),
           is_active: true,
         })
         .select("id, branch_name")
@@ -204,6 +207,8 @@ export default function AddBranch() {
         branch_email: "",
         address: "",
         branch_contact_no: "",
+        store_type:"",
+
       });
 
       setBankAccounts([
@@ -235,10 +240,11 @@ export default function AddBranch() {
 
   return (
     <>
+    {console.log(branchData)}
       <form onSubmit={handleCreateBranch} className="mb-8 space-y-5">
-        <h2 className="text-xl font-semibold text-white">Create Branch</h2>
+        <h2 className="text-xl font-semibold">Create Branch</h2>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 text-black">
           <div className="flex gap-4 flex-col">
             <input
               type="text"
@@ -295,6 +301,15 @@ export default function AddBranch() {
               className="border p-2 rounded w-full"
             />
           </div>
+          <select 
+            name="store_type"
+            className="border p-2 rounded w-full"
+            onChange={(e) => handleInput(e.target.name, e.target.value)}
+            value={branchData.store_type}
+          >
+            <option value="company">Company</option>
+            <option value="franchise">Franchise</option>
+          </select>
         </div>
 
         <div className="space-y-3">
