@@ -43,7 +43,7 @@ export default function Header() {
                 <SearchBar></SearchBar>
             </div>
             <div className="max-h-16 md:max-h-32 flex items-center w-10 md:w-36 justify-end">
-                {profile.role !== "viewer" && (
+                {profile?.role !== "viewer" && (
                     <div className={`relative transition-all duration-300 ease-in-out`}
                         onClick={() => navigate(`/cart`)}
                     >
@@ -58,11 +58,10 @@ export default function Header() {
                 {view === "searching" && (
                     <ChevronUp
                     onClick={handleCartClick}
-                    className="h-8 w-8 cursor-pointer text-white animate-bounce"
+                    className="h-8 w-8 cursor-pointer text-white animate-bounce z-50"
                     />
                 )}
                 </div>
-
 
         </div>
     );

@@ -44,20 +44,21 @@ function classification(num){
 
 //TO DETERMINE WHO CAN VIEW THE ITEM
 function interClass(num){
-  if(num == 0) {
+  if(num === "0") {
     return "NOT INTERACTIVE"
   }
-  if(num == 1) {
+  if(num === "1") {
     return "ALL INTERACTIVE"
   }
-  if(num == 2) {
+  if(num === "2") {
     return "BRANCH ONLY"
   }
+
+  return "BLANK / NULL"
 }
 
 /** Card extracted + memoized to reduce re-renders */
 const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart, userProfile }) {
-  console.log(itm)
   return (
     <div
       className="
