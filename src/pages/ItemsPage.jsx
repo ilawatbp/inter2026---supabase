@@ -97,13 +97,13 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart, userProfile 
           onClick={(e) => e.stopPropagation()}
         >
         
-          {userProfile.role === "viewer" && (
+          {/* {userProfile.role === "viewer" && (
             <div>
               <p>{itm.itemcode}</p>
               <p>Item Classification: {classification(itm.u_item_classification)}</p>
               <p>Interactive Stat: {interClass(itm.u_interactive)}</p>
             </div>
-          )}
+          )} */}
           <div className={`h-1 w-1 rounded-full ${itm.promo?.pm_discval && "bg-green-300"}`}></div>
 
           {userProfile.role !== "viewer" && (
@@ -224,12 +224,13 @@ export default function ItemsPage() {
       itemname,
       price,
       activeqrygroup,
-      u_item_classification,
-      u_interactive,
       promo:promo_discount (
         pm_discval
-      )
-    `)
+        )
+        `)
+        //removed from query mabigat kasi
+        // u_item_classification,
+        // u_interactive,
         .order("price", { ascending: false });
 
       if (query) {

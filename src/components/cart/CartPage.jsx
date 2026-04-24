@@ -8,17 +8,19 @@ import { useState, useRef, useEffect } from "react";
 export default function CartPage() {
   const printRef = useRef(null);
 
-  const [cartView, setCartView] = useState(() => {
-    const viewValue = localStorage.getItem("storageCartView");
-    if (viewValue == "null") {
-      return "form";
-    }
-    return viewValue;
-  });
+const [cartView, setCartView] = useState(() => {
+  const viewValue = localStorage.getItem("storageCartView");
 
-  useEffect(() => {
-    localStorage.setItem("storageCartView", cartView);
-  }, [cartView]);
+  if (!viewValue || viewValue === "null" || viewValue === "undefined") {
+    return "form";
+  }
+
+  return viewValue;
+});
+
+useEffect(() => {
+  localStorage.setItem("storageCartView", cartView || "form");
+}, [cartView]);
 
   return (
     <div className="h-screen bg-gray-100 pb-20 text-sm overflow-auto scrollbar-hide">
