@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "../assets/logo.png";
 import lamp from "../assets/bg-lamp.png";
-import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { getDeviceInfo } from "../utils/device";
@@ -27,6 +27,12 @@ export default function Login() {
   const [authFlowInProgress, setAuthFlowInProgress] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
 
+  useEffect(() => {
+    if (session && otpPending) {
+      setOtpStep(true);
+    }
+  }, [session, otpPending]);
+
   if (session && !otpPending && !otpStep && !authFlowInProgress) {
     return <Navigate to="/" replace />;
   }
@@ -44,226 +50,235 @@ export default function Login() {
     }
   }
 
-async function handleSubmit(e) {
-  e.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
 
-  if (!form.email.trim() || !form.password.trim()) {
-    setErrorMsg("Please enter your email and password.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setAuthFlowInProgress(true);
-    setErrorMsg("");
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email.trim(),
-      password: form.password,
-    });
-
-
-    if (error) {
-      setErrorMsg(error.message);
-      setAuthFlowInProgress(false);
+    if (!form.email.trim() || !form.password.trim()) {
+      setErrorMsg("Please enter your email and password.");
       return;
     }
 
-    const {
-      data: { session: currentSession },
-    } = await supabase.auth.getSession();
-
-    if (!currentSession?.access_token) {
-      setErrorMsg("Unable to get session after login.");
-      setAuthFlowInProgress(false);
-      return;
-    }
-
-    const deviceInfo = getDeviceInfo();
-
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`;
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentSession.access_token}`,
-      },
-      body: JSON.stringify(deviceInfo),
-    });
-
-
-    const result = await res.json();
-
-    if (!res.ok) {
-      setErrorMsg(result.error || "Device check failed.");
-      setAuthFlowInProgress(false);
-      return;
-    }
-
-    if (result.trusted) {
-      setOtpPending(false);
-      setAuthFlowInProgress(false);
-      navigate(from, { replace: true });
-      return;
-    }
-
-    if (result.otp_required) {
-      setOtpPending(true);
-      setOtpStep(true);
-      setOtpMaskedEmail(result.branch_email_masked || "");
-      setAuthFlowInProgress(false);
-      return;
-    }
-
-    setErrorMsg("Unexpected login response.");
-    setAuthFlowInProgress(false);
-  } catch (err) {
-    console.error("STEP ERROR in handleSubmit:", err);
-    setErrorMsg("Something went wrong. Please try again.");
-    setAuthFlowInProgress(false);
-  } finally {
-    setLoading(false);
-  }
-}
-
-async function handleVerifyOtp(e) {
-  e.preventDefault();
-
-  if (!otp.trim()) {
-    setErrorMsg("Please enter the OTP.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setErrorMsg("");
-
-    const {
-      data: { session: currentSession },
-    } = await supabase.auth.getSession();
-
-    if (!currentSession?.access_token) {
-      setErrorMsg("Your session expired. Please log in again.");
-      return;
-    }
-
-    const deviceInfo = getDeviceInfo();
-
-    const verifyRes = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-device-otp`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentSession.access_token}`,
-        },
-        body: JSON.stringify({
-          ...deviceInfo,
-          otp: otp.trim(),
-        }),
-      }
-    );
-
-    const verifyResult = await verifyRes.json();
-
-    if (!verifyRes.ok) {
-      setErrorMsg(verifyResult.error || verifyResult.message || "OTP verification failed.");
-      return;
-    }
-
-    if (!verifyResult.success || !verifyResult.requires_geolocation) {
-      setErrorMsg("Unexpected OTP response.");
-      return;
-    }
-
-    setGeoLoading(true);
-
-    let coords;
     try {
-      coords = await getBrowserLocation();
-    } catch (geoErr) {
-      await supabase.auth.signOut();
-      setOtpPending(false);
-      setOtpStep(false);
-      setAuthFlowInProgress(false);
-      setOtp("");
-      setOtpMaskedEmail("");
-      setGeoLoading(false);
+      setLoading(true);
+      setAuthFlowInProgress(true);
+      setErrorMsg("");
 
-      setErrorMsg("Location access is required on first login for a new device.");
-      navigate("/login", { replace: true });
-      return;
-    }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: form.email.trim(),
+        password: form.password,
+      });
 
-    const finalizeRes = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/finalize-device-approval`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${currentSession.access_token}`,
-        },
-        body: JSON.stringify({
-          device_id: deviceInfo.device_id,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        }),
+      if (error) {
+        setErrorMsg(error.message);
+        setAuthFlowInProgress(false);
+        return;
       }
-    );
 
-    const finalizeResult = await finalizeRes.json();
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
 
-    if (!finalizeRes.ok) {
-      setErrorMsg(finalizeResult.error || "Failed to save location.");
-      return;
+      if (!currentSession?.access_token) {
+        setErrorMsg("Unable to get session after login.");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      const deviceInfo = getDeviceInfo();
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify(deviceInfo),
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(result.error || "Device check failed.");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      if (result.trusted) {
+        setOtpPending(false);
+        setOtpStep(false);
+        setAuthFlowInProgress(false);
+        navigate(from, { replace: true });
+        return;
+      }
+
+      if (result.otp_required) {
+        setOtpPending(true);
+        setOtpStep(true);
+        setOtpMaskedEmail(result.branch_email_masked || "");
+        setAuthFlowInProgress(false);
+        return;
+      }
+
+      setErrorMsg("Unexpected login response.");
+      setAuthFlowInProgress(false);
+    } catch (err) {
+      console.error("STEP ERROR in handleSubmit:", err);
+      setErrorMsg("Something went wrong. Please try again.");
+      setAuthFlowInProgress(false);
+    } finally {
+      setLoading(false);
     }
-
-    if (finalizeResult.success) {
-      setOtpPending(false);
-      setOtpStep(false);
-      setOtp("");
-      navigate(from, { replace: true });
-      return;
-    }
-
-    setErrorMsg("Unexpected location approval response.");
-  } catch (err) {
-    setErrorMsg("Something went wrong during OTP verification.");
-  } finally {
-    setLoading(false);
-    setGeoLoading(false);
   }
-}
+
+  async function handleVerifyOtp(e) {
+    e.preventDefault();
+
+    if (!otp.trim()) {
+      setErrorMsg("Please enter the OTP.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMsg("");
+
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (!currentSession?.access_token) {
+        setErrorMsg("Your session expired. Please log in again.");
+        return;
+      }
+
+      const deviceInfo = getDeviceInfo();
+
+      const verifyRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-device-otp`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({
+            ...deviceInfo,
+            otp: otp.trim(),
+          }),
+        }
+      );
+
+      const verifyResult = await verifyRes.json();
+
+      if (!verifyRes.ok) {
+        setErrorMsg(
+          verifyResult.error ||
+            verifyResult.message ||
+            "OTP verification failed."
+        );
+        return;
+      }
+
+      if (!verifyResult.success || !verifyResult.requires_geolocation) {
+        setErrorMsg("Unexpected OTP response.");
+        return;
+      }
+
+      setGeoLoading(true);
+
+      let coords;
+
+      try {
+        coords = await getBrowserLocation();
+      } catch (geoErr) {
+        await supabase.auth.signOut();
+
+        setOtpPending(false);
+        setOtpStep(false);
+        setAuthFlowInProgress(false);
+        setOtp("");
+        setOtpMaskedEmail("");
+        setGeoLoading(false);
+
+        setErrorMsg("Location access is required on first login for a new device.");
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      const finalizeRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/finalize-device-approval`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+          },
+          body: JSON.stringify({
+            device_id: deviceInfo.device_id,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          }),
+        }
+      );
+
+      const finalizeResult = await finalizeRes.json();
+
+      if (!finalizeRes.ok) {
+        setErrorMsg(finalizeResult.error || "Failed to save location.");
+        return;
+      }
+
+      if (finalizeResult.success) {
+        setOtpPending(false);
+        setOtpStep(false);
+        setOtp("");
+        setOtpMaskedEmail("");
+        navigate(from, { replace: true });
+        return;
+      }
+
+      setErrorMsg("Unexpected location approval response.");
+    } catch (err) {
+      console.error("OTP verification error:", err);
+      setErrorMsg("Something went wrong during OTP verification.");
+    } finally {
+      setLoading(false);
+      setGeoLoading(false);
+    }
+  }
 
   function getBrowserLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported by this browser."));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        reject(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by this browser."));
+        return;
       }
-    );
-  });
-}
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    });
+  }
 
   async function handleCancelOtp() {
     await supabase.auth.signOut();
+
     setOtpPending(false);
     setOtpStep(false);
     setAuthFlowInProgress(false);
@@ -294,9 +309,12 @@ async function handleVerifyOtp(e) {
             <h1 className="text-3xl sm:text-4xl font-bold capitalize">
               {otpStep ? "Verify device" : "Log in"}
             </h1>
+
             <p className="text-sm text-gray-500 mt-2">
               {otpStep
-                ? `Enter the OTP sent to ${otpMaskedEmail || "your branch email"}`
+                ? `Enter the OTP sent to ${
+                    otpMaskedEmail || "your branch email"
+                  }`
                 : "Sign in to continue to Interactive"}
             </p>
           </div>
@@ -312,6 +330,7 @@ async function handleVerifyOtp(e) {
                 <label htmlFor="email" className="text-sm font-medium">
                   Email
                 </label>
+
                 <input
                   id="email"
                   name="email"
@@ -347,6 +366,7 @@ async function handleVerifyOtp(e) {
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-black"
+                    disabled={loading}
                   >
                     {showPassword ? "Hide" : "Show"}
                   </button> */}
@@ -371,13 +391,6 @@ async function handleVerifyOtp(e) {
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
-
-              {/* <Link
-                to="/forgot-password"
-                className="ml-auto text-sm cursor-pointer hover:font-bold"
-              >
-                Forgot password?
-              </Link> */}
             </form>
           ) : (
             <form
@@ -386,15 +399,17 @@ async function handleVerifyOtp(e) {
             >
               <p className="mr-auto text-sm text-gray-600">Interactive</p>
 
-<div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-  This is a new device. After OTP verification, you must allow location access to continue.
-  If you deny location, you will be returned to the login page.
-</div>
+              <div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                This is a new device. After OTP verification, you must allow
+                location access to continue. If you deny location, you will be
+                returned to the login page.
+              </div>
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="otp" className="text-sm font-medium">
                   OTP
                 </label>
+
                 <input
                   id="otp"
                   name="otp"
@@ -409,6 +424,7 @@ async function handleVerifyOtp(e) {
                   disabled={loading}
                   maxLength={6}
                   autoComplete="one-time-code"
+                  inputMode="numeric"
                 />
               </div>
 

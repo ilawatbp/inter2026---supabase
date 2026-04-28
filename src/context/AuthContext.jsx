@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { getDeviceInfo } from "../utils/device";
 
 const AuthContext = createContext();
 
@@ -9,18 +10,23 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [branch, setBranch] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [deviceChecking, setDeviceChecking] = useState(true);
+
   const [error, setError] = useState("");
+
   const [otpPending, setOtpPendingState] = useState(
-    sessionStorage.getItem(OTP_PENDING_KEY) === "true"
+    localStorage.getItem(OTP_PENDING_KEY) === "true"
   );
 
   function setOtpPending(value) {
     if (value) {
-      sessionStorage.setItem(OTP_PENDING_KEY, "true");
+      localStorage.setItem(OTP_PENDING_KEY, "true");
       setOtpPendingState(true);
     } else {
+      localStorage.removeItem(OTP_PENDING_KEY);
       sessionStorage.removeItem(OTP_PENDING_KEY);
       setOtpPendingState(false);
     }
@@ -37,8 +43,9 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setBranch(null);
     setOtpPending(false);
+    setDeviceChecking(false);
 
-    localStorage.clear();
+    localStorage.removeItem(OTP_PENDING_KEY);
     sessionStorage.removeItem(OTP_PENDING_KEY);
 
     window.location.href = "/login";
@@ -78,6 +85,7 @@ export function AuthProvider({ children }) {
         setProfile(null);
         setBranch(null);
         setOtpPending(false);
+        setDeviceChecking(false);
       }
     });
 
@@ -87,13 +95,97 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // 2) Load profile + branch whenever session changes
+  // 2) Global device check whenever app starts with existing session
+  // IMPORTANT:
+  // Skip this check on /login because Login.jsx already calls start-device-check
+  // after manual password login. This prevents duplicate OTP emails.
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkDeviceOnAppStart() {
+      const isLoginPage = window.location.pathname === "/login";
+
+      if (!session?.access_token) {
+        if (mounted) {
+          setDeviceChecking(false);
+        }
+        return;
+      }
+
+      if (isLoginPage) {
+        if (mounted) {
+          setDeviceChecking(false);
+        }
+        return;
+      }
+
+      try {
+        setDeviceChecking(true);
+
+        const deviceInfo = getDeviceInfo();
+
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/start-device-check`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify(deviceInfo),
+          }
+        );
+
+        const result = await res.json();
+
+        if (!mounted) return;
+
+        if (!res.ok) {
+          console.error("Device check failed:", result);
+          setOtpPending(true);
+          return;
+        }
+
+        if (result.trusted) {
+          setOtpPending(false);
+          return;
+        }
+
+        if (result.otp_required) {
+          setOtpPending(true);
+          return;
+        }
+
+        console.error("Unexpected device check response:", result);
+        setOtpPending(true);
+      } catch (err) {
+        console.error("Device startup check error:", err);
+
+        if (mounted) {
+          setOtpPending(true);
+        }
+      } finally {
+        if (mounted) {
+          setDeviceChecking(false);
+        }
+      }
+    }
+
+    checkDeviceOnAppStart();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.access_token]);
+
+  // 3) Load profile + branch whenever session changes
   useEffect(() => {
     let mounted = true;
 
     async function loadProfile() {
       if (!session?.user?.id) {
         if (!mounted) return;
+
         setProfile(null);
         setBranch(null);
         setProfileLoading(false);
@@ -140,7 +232,6 @@ export function AuthProvider({ children }) {
         setProfile(null);
         setBranch(null);
       } else {
-        // force logout immediately if admin flagged this user
         if (data?.force_logout === true || data?.status !== "active") {
           await forceLocalLogout();
           return;
@@ -149,7 +240,6 @@ export function AuthProvider({ children }) {
         setProfile(data);
         setBranch(data?.branches ?? null);
 
-        // optional: reset force_logout after successful profile load
         await supabase
           .from("profiles")
           .update({ force_logout: false })
@@ -166,7 +256,7 @@ export function AuthProvider({ children }) {
     };
   }, [session]);
 
-  // 3) Watch own profile for forced logout in realtime
+  // 4) Watch own profile for forced logout in realtime
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -207,8 +297,9 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setBranch(null);
     setOtpPending(false);
+    setDeviceChecking(false);
 
-    localStorage.clear();
+    localStorage.removeItem(OTP_PENDING_KEY);
     sessionStorage.removeItem(OTP_PENDING_KEY);
 
     window.location.href = "/login";
@@ -221,12 +312,17 @@ export function AuthProvider({ children }) {
         user: session?.user ?? null,
         profile,
         branch,
+
         loading,
         profileLoading,
+        deviceChecking,
+
         error,
         signOut,
+
         otpPending,
         setOtpPending,
+
         isAuthenticated: !!session,
         isAdmin: profile?.role === "admin",
       }}

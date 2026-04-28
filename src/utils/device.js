@@ -1,9 +1,10 @@
+import { v4 as uuidv4 } from "uuid";
 export function getOrCreateDeviceId() {
   const key = "interactive_device_id";
   let id = localStorage.getItem(key);
 
   if (!id) {
-    id = crypto.randomUUID();
+    id = uuidv4();
     localStorage.setItem(key, id);
   }
 
