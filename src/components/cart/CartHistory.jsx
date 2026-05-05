@@ -10,7 +10,7 @@ export default function CartHistory({ setCartView }) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus } = useShop();
+  const { setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus, setDiscountButtonEnable } = useShop();
 
   const itemsPerPage = 100;
 
@@ -63,27 +63,8 @@ export default function CartHistory({ setCartView }) {
         frName: isPrinting ? header.from_name ?? "" : prev.frName,
       }));
 
-      // setQuoteDetails({
-      //   Attn: header.attention ?? "",
-      //   Desig: header.designation ?? "",
-      //   Comp: header.company ?? "",
-      //   Loc: header.location ?? "",
-      //   Proj: header.project_name ?? "",
-      //   Qdate: header.quotation_date ?? "",
-      //   validUntil: header.valid_until ?? "",
-      //   ins_charge: header.installation_charge ?? "0",
-      //   del_charge: header.delivery_charge ?? "0",
-      //   leadTime: header.lead_time ?? "",
-      //   warranty: header.warranty ?? "",
-      //   Discount: header.discount_mode ?? "Y",
-      //   authName: header.authorized_by_name ?? "",
-      //   authDesig: header.authorized_by_designation ?? "",
-      //   cliName: header.client_authorized_name ?? "",
-      //   cliDesig: header.client_authorized_designation ?? "",
-      //   // prepby: header.prepared_by ?? "",
-      //   // designationOfUser: header.prepared_by_designation ?? "",
-      //   // frName: header.from_name ?? "",
-      // });
+      setDiscountButtonEnable(header.discount_enabled)
+      
 
       if (isPrinting) {
         setQuoteNum(header.quotation_no ?? "");

@@ -26,7 +26,7 @@ import {
 
 export default function CartForm({ printRef }) {
 
-    const { cartValue, setCartValue, handleCustomerDetailsOnchange, quoteDetails, quoteStatus } = useShop();
+    const { cartValue, setCartValue, handleCustomerDetailsOnchange, quoteDetails, quoteStatus, discountButtonEnable } = useShop();
 
     const [pendingDeleteUid, setPendingDeleteUid] = useState(null)
 
@@ -63,11 +63,18 @@ export default function CartForm({ printRef }) {
 
 
     function calculatePrice(quantity, price, discount = 0) {
+        if (discountButtonEnable){
         const subtotal = quantity * price;
         const discountAmount = subtotal * (discount / 100);
         const total = subtotal - discountAmount;
 
         return Math.round(total * 100) / 100;
+        }else{
+        const subtotal = quantity * price;
+
+        return Math.round(subtotal);
+        }
+
     }
     const totalAmount = cartValue?.reduce((acc, item) => {
         const itemTotal = calculatePrice(
@@ -115,7 +122,9 @@ export default function CartForm({ printRef }) {
                                         <th className="py-1 font-semibold text-center w-[180px]">Picture</th>
                                         <th className="py-1 font-semibold text-center w-[70px]">Quantity</th>
                                         <th className="py-1 font-semibold text-left">Description</th>
-                                        <th className="py-1 font-semibold text-left w-[70px]">Discount</th>
+                                        {
+                                            discountButtonEnable && (<th className="py-1 font-semibold text-left w-[70px]">Discount</th>)
+                                        }
                                         <th className="py-1 font-semibold text-right w-[70px]">SRP</th>
                                         <th className="py-1 font-semibold text-right w-[70px]">Total</th>
                                         {quoteStatus !== "locked" ? (<th className="py-1 w-[30px]"></th>) : (<th className="py-1 w-[10px]"></th>)}
