@@ -153,25 +153,34 @@ export default function CartForm({ printRef }) {
                             }
                             </div>
                         </div>
+                        {console.log(quoteStatus)}
+                        {quoteStatus === "locked" && Number(quoteDetails?.del_charge) <= 0 ?
+                            "" : (
+                                <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
+                                    <div className="font-semibold">Delivery Charges</div>
+                                    <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white hidden" : "bg-gray-200/60 px-2 "}`}
+                                        onChange={(e) => handleCustomerDetailsOnchange('del_charge', e.target.value.toString())}
+                                        defaultValue={Number(quoteDetails?.del_charge)}
+                                        disabled={quoteStatus === "locked"}
+                                    />
+                                    <p className={`px-4 font-semibold ${quoteStatus !== "locked" && "hidden"}`}>{Number(quoteDetails?.del_charge).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}</p>
 
-                        <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
-                            <div className="font-semibold">Delivery Charges</div>
-                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60 px-2 "}`}
-                                onChange={(e) => handleCustomerDetailsOnchange('del_charge', e.target.value.toString())}
-                                defaultValue={Number(quoteDetails?.del_charge)}
-                                disabled={quoteStatus === "locked"}
-                            />
+                                </div>
+                            )}
 
-                        </div>
+                        {quoteStatus === "locked" && Number(quoteDetails?.ins_charge) <= 0 ?
+                            "" : (
+                                <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
+                                    <div className="font-semibold">Installation Charges</div>
+                                    <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white hidden" : "bg-gray-200/60 px-2"}`}
+                                        onChange={(e) => handleCustomerDetailsOnchange('ins_charge', e.target.value.toString())}
+                                        defaultValue={Number(quoteDetails?.ins_charge)}
+                                        disabled={quoteStatus === "locked"}
+                                    />
+                                    <p className={`px-4 font-semibold ${quoteStatus !== "locked" && "hidden"}`}>{Number(quoteDetails?.ins_charge).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}</p>
+                                </div>
+                            )}
 
-                        <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">
-                            <div className="font-semibold">Installation Charges</div>
-                            <input type="number" min="0" className={`w-[110px] text-right font-semibold ${quoteStatus === "locked" ? "bg-white" : "bg-gray-200/60 px-2"}`}
-                                onChange={(e) => handleCustomerDetailsOnchange('ins_charge', e.target.value.toString())}
-                                defaultValue={Number(quoteDetails?.ins_charge)}
-                                disabled={quoteStatus === "locked"}
-                            />
-                        </div>
 
                         <div className="flex justify-between px-4 items-center gap-6 py-2 text-[10px]">
                             <div className="font-semibold">Grand Total</div>

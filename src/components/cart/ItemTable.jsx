@@ -124,17 +124,19 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
           onChange={(e) => handleChange(p.uid, "Discount", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
+        %
       </td>
       )}
 
 
       {/* SRP */}
       <td className="py-2 text-right align-middle">
-        <input type="number" min="0" className={`no-spinner text-center w-[50px] p-2  bg-white ${quoteStatus !== "locked" && "border-b"}`}
+        <input type="number" min="0" className={`no-spinner text-center w-full p-2  bg-white ${quoteStatus !== "locked" ? "border-b" : "hidden"}`}
           value={Number(p.SRP ?? 0)}
           onChange={(e) => handleChange(p.uid, "SRP", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
+        <p className={quoteStatus === "locked" ? "block" : "hidden"}>{Number(p.SRP ?? 0).toLocaleString("en-PH", {minimumFractionDigits: 2,})}</p>
         {/* {Number(p.SRP).toLocaleString()} */}
       </td>
 
@@ -143,7 +145,6 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
         {
           Number(calculatePrice(p.Quantity, p.SRP, p.Discount)).toLocaleString("en-PH", {
             minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
           })
         }
       </td>
