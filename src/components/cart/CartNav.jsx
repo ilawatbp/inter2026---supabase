@@ -1,5 +1,6 @@
 import { House, Save, BrushCleaning, Printer } from "lucide-react";
 import { useShop } from "../../context/ShopContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Modal from "../Modal";
 import { useRef, useState } from "react";
@@ -7,7 +8,7 @@ import { useReactToPrint } from "react-to-print";
 import { sileo } from "sileo";
 
 import { supabase } from "../../lib/supabase";
-import { useAuth } from "../../context/AuthContext";
+import ToggleSwitch from "./ToggleSwitch";
 
 export default function CartNav({ setCartView, cartView, printRef }) {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   const [errorMsg, setErrorMsg] = useState("");
   const discountValue = useRef();
 
-  
+
+
   const {
     cartValue,
     quoteDetails,
@@ -33,6 +35,8 @@ export default function CartNav({ setCartView, cartView, printRef }) {
     setQuoteStatus,
     rowsService,
     setRowsService,
+    discountButtonEnable,
+    setDiscountButtonEnable
   } = useShop();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -48,9 +52,9 @@ export default function CartNav({ setCartView, cartView, printRef }) {
     ];
   }
 
-  function buildQuotationHeaderPayload({ quoteDetails }) {
+  function buildQuotationHeaderPayload({ quoteDetails, discountButtonEnable}) {
     const q = quoteDetails ?? {};
-
+    
     return {
       p_quotation_date: q.Qdate,
       p_valid_until: q.validUntil,
@@ -77,6 +81,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
       p_client_authorized_designation: q.cliDesig || null,
       p_status: "locked",
       p_remarks: null,
+      p_discount_enabled: discountButtonEnable
     };
   }
 
@@ -147,7 +152,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
 
   async function submitQuote() {
     const headerPayload = buildQuotationHeaderPayload({
-      quoteDetails,
+      quoteDetails, discountButtonEnable,
     });
 
     try {
@@ -319,101 +324,101 @@ export default function CartNav({ setCartView, cartView, printRef }) {
   }
 
   function handleSave() {
-  const isFakeValue = (value) => {
-    const cleaned = (value || "").trim();
-    if (cleaned === "") return true;
-    return /^[-.]+$/.test(cleaned);
-  };
+    const isFakeValue = (value) => {
+      const cleaned = (value || "").trim();
+      if (cleaned === "") return true;
+      return /^[-.]+$/.test(cleaned);
+    };
 
-  if (cartView === "form") {
-    if (cartValue.length === 0) {
-      setOpenErrorModal(true);
-      setErrorMsg("Please add at least one item.");
-      return;
-    }
-
-    for (const item of cartValue) {
-      if (Number(item.Quantity) <= 0) {
+    if (cartView === "form") {
+      if (cartValue.length === 0) {
         setOpenErrorModal(true);
-        setErrorMsg("All items must have at least quantity of 1.");
+        setErrorMsg("Please add at least one item.");
         return;
       }
-    }
 
-    const attnValue = quoteDetails.Attn || "";
-    const compValue = quoteDetails.Comp || "";
-    const designationValue = quoteDetails.designationOfUser || "";
-    const prepByValue = quoteDetails.prepby || "";
+      for (const item of cartValue) {
+        if (Number(item.Quantity) <= 0) {
+          setOpenErrorModal(true);
+          setErrorMsg("All items must have at least quantity of 1.");
+          return;
+        }
+      }
 
-    if (isFakeValue(attnValue) || isFakeValue(compValue)) {
-      setOpenErrorModal(true);
-      setErrorMsg(
-        "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
-      );
+      const attnValue = quoteDetails.Attn || "";
+      const compValue = quoteDetails.Comp || "";
+      const designationValue = quoteDetails.designationOfUser || "";
+      const prepByValue = quoteDetails.prepby || "";
+
+      if (isFakeValue(attnValue) || isFakeValue(compValue)) {
+        setOpenErrorModal(true);
+        setErrorMsg(
+          "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
+        );
+        return;
+      }
+
+      if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
+        setOpenErrorModal(true);
+        setErrorMsg(
+          "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
+        );
+        return;
+      }
+
+      setOpenSaveModal(true);
       return;
     }
 
-    if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
-      setOpenErrorModal(true);
-      setErrorMsg(
-        "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
-      );
-      return;
-    }
+    if (cartView === "serviceForm") {
+      const cleanedRowsService = rowsService.filter((row) => {
+        const hasServiceType = row.serviceType?.trim();
+        const hasAmount = Number(row.amount) > 0;
+        const hasScopes = row.scopes?.some((scope) => scope.trim() !== "");
 
-    setOpenSaveModal(true);
-    return;
+        return hasServiceType || hasAmount || hasScopes;
+      });
+
+      if (cleanedRowsService.length === 0) {
+        setOpenErrorModal(true);
+        setErrorMsg("Please add at least one service row.");
+        return;
+      }
+
+      const attnValue = quoteDetails.Attn || "";
+      const compValue = quoteDetails.Comp || "";
+      const designationValue = quoteDetails.designationOfUser || "";
+      const prepByValue = quoteDetails.prepby || "";
+
+      if (isFakeValue(attnValue) || isFakeValue(compValue)) {
+        setOpenErrorModal(true);
+        setErrorMsg(
+          "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
+        );
+        return;
+      }
+
+      if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
+        setOpenErrorModal(true);
+        setErrorMsg(
+          "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
+        );
+        return;
+      }
+
+      const hasEmptyScope = rowsService.some(({ scopes = [] }) =>
+        scopes.some((scope) => scope.trim() === "")
+      );
+
+      if (hasEmptyScope) {
+        setOpenErrorModal(true);
+        setErrorMsg("Please complete the Scope Details.");
+        return;
+      }
+
+      setOpenSaveModal(true);
+    }
   }
-
-  if (cartView === "serviceForm") {
-    const cleanedRowsService = rowsService.filter((row) => {
-      const hasServiceType = row.serviceType?.trim();
-      const hasAmount = Number(row.amount) > 0;
-      const hasScopes = row.scopes?.some((scope) => scope.trim() !== "");
-
-      return hasServiceType || hasAmount || hasScopes;
-    });
-
-    if (cleanedRowsService.length === 0) {
-      setOpenErrorModal(true);
-      setErrorMsg("Please add at least one service row.");
-      return;
-    }
-
-    const attnValue = quoteDetails.Attn || "";
-    const compValue = quoteDetails.Comp || "";
-    const designationValue = quoteDetails.designationOfUser || "";
-    const prepByValue = quoteDetails.prepby || "";
-
-    if (isFakeValue(attnValue) || isFakeValue(compValue)) {
-      setOpenErrorModal(true);
-      setErrorMsg(
-        "Please input real data. Customer Details cannot be blank or contain only '-' or '.'."
-      );
-      return;
-    }
-
-    if (isFakeValue(designationValue) || isFakeValue(prepByValue)) {
-      setOpenErrorModal(true);
-      setErrorMsg(
-        "Please indicate who prepared this quotation using real data. These fields cannot be blank or contain only '-' or '.'."
-      );
-      return;
-    }
-
-    const hasEmptyScope = rowsService.some(({ scopes = [] }) =>
-      scopes.some((scope) => scope.trim() === "")
-    );
-
-    if (hasEmptyScope) {
-      setOpenErrorModal(true);
-      setErrorMsg("Please complete the Scope Details.");
-      return;
-    }
-
-    setOpenSaveModal(true);
-  }
-}
 
   function handleClear() {
     if (cartView === "serviceForm") {
@@ -526,13 +531,26 @@ export default function CartNav({ setCartView, cartView, printRef }) {
                 </button>
 
                 {cartView === "form" && (
-                  <button
-                    type="button"
-                    className="rounded-full px-4 py-2 hover:text-green-400 transition"
-                    onClick={handleOpenDiscout}
-                  >
-                    Discount All
-                  </button>
+                  <>
+
+                    Discount
+                    <ToggleSwitch buttonEnable={discountButtonEnable} setButtonEnable={setDiscountButtonEnable}/>
+
+                    <button
+                      type="button"
+                      className={`rounded-full px-4 py-2 hover:text-green-400 transition-all duration-300 ease-in-out 
+                                ${discountButtonEnable ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                      onClick={handleOpenDiscout}
+                    >
+                      Discount All
+                    </button>
+
+
+                  </>
+                      
+
+
+
                 )}
               </>
             )}
@@ -589,7 +607,7 @@ export default function CartNav({ setCartView, cartView, printRef }) {
             ? "Are you sure you want to save this service quotation?"
             : "Are you sure you want to save this quotation?"}
         </p>
-       
+
 
         <div className="flex justify-center gap-4 pt-2">
           <button
@@ -600,9 +618,8 @@ export default function CartNav({ setCartView, cartView, printRef }) {
           </button>
 
           <button
-            className={`px-5 py-2 rounded-xl text-white hover:bg-green-600 transition ${
-              isSaving ? "bg-green-300" : "bg-green-500"
-            }`}
+            className={`px-5 py-2 rounded-xl text-white hover:bg-green-600 transition ${isSaving ? "bg-green-300" : "bg-green-500"
+              }`}
             onClick={handleConfirmSave}
             disabled={isSaving}
           >

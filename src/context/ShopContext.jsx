@@ -13,6 +13,15 @@ export function ShopProvider({ children }) {
   const [cartValue, setCartValue] = useState([]);
   const [quoteDetails, setQuoteDetails] = useState(null);
 
+  const [discountButtonEnable, setDiscountButtonEnable] = useState(()=> {
+    const saved = localStorage.getItem("discountButtonEnable");
+    return saved === "true";
+  }); // for toggle button
+
+  useEffect(() => {
+    localStorage.setItem("discountButtonEnable", String(discountButtonEnable))
+  }, [discountButtonEnable])
+
   const defaultRowsService = useMemo(
     () => [
       {
@@ -150,6 +159,8 @@ export function ShopProvider({ children }) {
         setQuoteStatus,
         rowsService,
         setRowsService,
+        discountButtonEnable, 
+        setDiscountButtonEnable
       }}
     >
       {children}

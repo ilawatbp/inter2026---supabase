@@ -19,7 +19,7 @@ function getItemImageUrl(itemcode) {
 
 export default function ItemTable({ p, openDelModal, calculatePrice }) {
 
-  const { cartValue, setCartValue, quoteStatus } = useShop();
+  const { cartValue, setCartValue, quoteStatus, discountButtonEnable } = useShop();
 
   const {
     attributes,
@@ -117,13 +117,16 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
       </td>
 
       {/* DISCOUNT */}
-      <td className="py-2 text-right align-middle">
+      {discountButtonEnable && (
+      <td className={`py-2 text-right align-middle`}>
         <input type="number" min="0" max="100" className={`text-center w-[50px] p-2  bg-white ${quoteStatus !== "locked" && "border-b"}`}
           value={Number(p.Discount ?? 0)}
           onChange={(e) => handleChange(p.uid, "Discount", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
       </td>
+      )}
+
 
       {/* SRP */}
       <td className="py-2 text-right align-middle">
