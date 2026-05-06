@@ -121,12 +121,12 @@ export default function CartForm({ printRef }) {
                                         )}
                                         <th className="py-1 font-semibold text-center w-[180px]">Picture</th>
                                         <th className="py-1 font-semibold text-center w-[70px]">Quantity</th>
-                                        <th className="py-1 font-semibold text-left">Description</th>
+                                        <th className="py-1 font-semibold text-left ">Description</th>
                                         {
-                                            discountButtonEnable && (<th className="py-1 font-semibold text-left w-[70px]">Discount</th>)
+                                            discountButtonEnable && (<th className="py-1 font-semibold text-center w-[70px]">Discount</th>)
                                         }
-                                        <th className="py-1 font-semibold text-right w-[70px]">SRP</th>
-                                        <th className="py-1 font-semibold text-right w-[70px]">Total</th>
+                                        <th className="py-1 font-semibold text-center w-[70px]">SRP</th>
+                                        <th className="py-1 font-semibold text-center w-[70px]">Total</th>
                                         {quoteStatus !== "locked" ? (<th className="py-1 w-[30px]"></th>) : (<th className="py-1 w-[10px]"></th>)}
 
                                     </tr>

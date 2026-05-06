@@ -83,11 +83,12 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
       {/* Quantity */}
       <td className="py-2 text-center align-middle">
         <input type="number" min="1"
-          className={`text-center w-[50px] p-2 bg-white flex-1 h-4 bg-gray-200/60 outline-none px-1  ${quoteStatus !== "locked" && "border-b"}`}
+          className={`text-center w-[50px] p-2 bg-white flex-1 h-4 bg-gray-200/60 outline-none px-1  ${quoteStatus !== "locked" ? "border-b" : "hidden"}`}
           value={Number(p.Quantity ?? 1)}
           onChange={(e) => handleChange(p.uid, "Quantity", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
+        <p className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>{Number(p.Quantity ?? 1)}</p>
       </td>
 
       {/* Description */}
@@ -108,23 +109,44 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
         </div>
 
         <div>Notes:
-          <textarea name="" id="" className={`w-full p-2  bg-white ${quoteStatus !== "locked" && "border"}`}
+          {/* <textarea name="" id="" className={`w-full p-2  bg-white ${quoteStatus !== "locked" && "border"}`}
             value={p.Rem}
             onChange={(e) => handleChange(p.uid, "Rem", e.target.value)}
             disabled={quoteStatus === "locked"}
-          ></textarea>
+          ></textarea> */}
+          <textarea
+            ref={(el) => {
+              if (el) {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            className={`w-full resize-none overflow-hidden p-2 bg-white ${quoteStatus !== "locked" && "border"
+              }`}
+            value={p.Rem}
+            rows={1}
+            onChange={(e) => {
+              handleChange(p.uid, "Rem", e.target.value);
+
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            disabled={quoteStatus === "locked"}
+          />
         </div>
       </td>
 
       {/* DISCOUNT */}
       {discountButtonEnable && (
       <td className={`py-2 text-right align-middle`}>
-        <input type="number" min="0" max="100" className={`text-center w-[50px] p-2  bg-white ${quoteStatus !== "locked" && "border-b"}`}
+        <input type="number" min="0" max="100" className={`text-center w-[50px] p-2  bg-white ${quoteStatus !== "locked" ? "border-b" : "hidden"}`}
           value={Number(p.Discount ?? 0)}
           onChange={(e) => handleChange(p.uid, "Discount", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
-        %
+        <div className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>
+        {Number(p.Discount ?? 0)}%
+        </div>
       </td>
       )}
 
@@ -136,8 +158,7 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
           onChange={(e) => handleChange(p.uid, "SRP", e.target.value)}
           disabled={quoteStatus === "locked"}
         />
-        <p className={quoteStatus === "locked" ? "block" : "hidden"}>{Number(p.SRP ?? 0).toLocaleString("en-PH", {minimumFractionDigits: 2,})}</p>
-        {/* {Number(p.SRP).toLocaleString()} */}
+        <p className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>{Number(p.SRP ?? 0).toLocaleString("en-PH", {minimumFractionDigits: 2,})}</p>
       </td>
 
       {/* Total */}
