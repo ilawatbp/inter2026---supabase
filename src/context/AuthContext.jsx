@@ -146,18 +146,41 @@ export function AuthProvider({ children }) {
           return;
         }
 
-        if (result.trusted) {
-          setOtpPending(false);
-          return;
-        }
+// FULLY APPROVED DEVICE
+if (
+  result.trusted === true &&
+  result.device_approved === true
+) {
+  setOtpPending(false);
+  return;
+}
 
-        if (result.otp_required) {
-          setOtpPending(true);
-          return;
-        }
+// DEVICE WAITING FOR ADMIN APPROVAL
+if (
+  result.reason === "DEVICE_PENDING_APPROVAL" ||
+  result.device_approved === false
+) {
+  setOtpPending(true);
 
-        console.error("Unexpected device check response:", result);
-        setOtpPending(true);
+  // IMPORTANT:
+  // force redirect back to login
+  if (window.location.pathname !== "/login") {
+    window.location.href = "/login";
+  }
+
+  return;
+}
+
+// OTP REQUIRED
+if (result.otp_required) {
+  setOtpPending(true);
+  return;
+}
+
+console.error("Unexpected device check response:", result);
+setOtpPending(true);
+
+
       } catch (err) {
         console.error("Device startup check error:", err);
 

@@ -7,6 +7,7 @@ import {
   UserRoundSearch,
   Image,
   UserCheck,
+  ShieldCheck
 } from "lucide-react";
 
 import AddBranch from "../components/admin/AddBranch";
@@ -15,6 +16,7 @@ import AddUser from "../components/admin/AddUser";
 import UserList from "../components/admin/UserList";
 import ImageUploader from "../components/admin/ImageUploader";
 import AdminLoginReports from "../components/admin/AdminLoginReports";
+import AdminDeviceApproval from "../components/admin/AdminDeviceApproval";
 
 export default function AdminPage() {
   const { profile, signOut } = useAuth();
@@ -161,6 +163,7 @@ export default function AdminPage() {
           <MenuCard icon={UserRoundPlus} label="Add User" viewKey="addUser" />
           <MenuCard icon={UserRoundSearch} label="Users" viewKey="userList" />
           <MenuCard icon={UserCheck} label="Login Reports" viewKey="loginReport" />
+          <MenuCard icon={ShieldCheck} label="Device Approval" viewKey="deviceApproval" />
           <MenuCard icon={Image} label="Upload Image" viewKey="imageUploader" />
         </div>
       </nav>
@@ -184,6 +187,10 @@ export default function AdminPage() {
 
         <PanelWrapper show={adminView === "loginReport"} dark={false}>
           <AdminLoginReports />
+        </PanelWrapper>
+
+        <PanelWrapper show={adminView === "deviceApproval"} dark={false}>
+          <AdminDeviceApproval />
         </PanelWrapper>
 
         <PanelWrapper show={adminView === "imageUploader"} dark={false}>
