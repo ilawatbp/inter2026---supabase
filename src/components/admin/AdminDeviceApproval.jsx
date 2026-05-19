@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function AdminDeviceApproval() {
@@ -6,6 +6,7 @@ export default function AdminDeviceApproval() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
 
   function formatDate(value) {
     if (!value) return "-";
@@ -94,6 +95,20 @@ export default function AdminDeviceApproval() {
     loadDevices();
   }, []);
 
+  const tabCounts = useMemo(() => {
+    return {
+      pending: devices.filter((d) => d.status === "pending").length,
+      approved: devices.filter((d) => d.status === "approved").length,
+      rejected: devices.filter((d) => d.status === "rejected").length,
+      all: devices.length,
+    };
+  }, [devices]);
+
+  const visibleDevices = useMemo(() => {
+    if (activeTab === "all") return devices;
+    return devices.filter((d) => d.status === activeTab);
+  }, [devices, activeTab]);
+
   async function handleAction(deviceId, action) {
     try {
       setActionLoading(deviceId);
@@ -133,6 +148,31 @@ export default function AdminDeviceApproval() {
     }
   }
 
+  function TabButton({ value, label, count }) {
+    const isActive = activeTab === value;
+
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveTab(value)}
+        className={`px-4 py-2 rounded-xl border text-sm transition ${
+          isActive
+            ? "bg-black text-white border-black"
+            : "bg-white text-black hover:bg-gray-100"
+        }`}
+      >
+        {label}
+        <span
+          className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+            isActive ? "bg-white text-black" : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          {count}
+        </span>
+      </button>
+    );
+  }
+
   if (loading) {
     return (
       <div className="w-full p-6 text-sm text-gray-500">
@@ -143,8 +183,13 @@ export default function AdminDeviceApproval() {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Device Approval Management</h2>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Device Approval Management</h2>
+          <p className="text-sm text-gray-500">
+            Default view shows pending devices only. Use All History to review old approved or rejected records.
+          </p>
+        </div>
 
         <button
           onClick={loadDevices}
@@ -152,6 +197,13 @@ export default function AdminDeviceApproval() {
         >
           Refresh
         </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <TabButton value="pending" label="Pending" count={tabCounts.pending} />
+        <TabButton value="approved" label="Approved" count={tabCounts.approved} />
+        <TabButton value="rejected" label="Rejected" count={tabCounts.rejected} />
+        <TabButton value="all" label="All History" count={tabCounts.all} />
       </div>
 
       {error && (
@@ -183,7 +235,7 @@ export default function AdminDeviceApproval() {
           </thead>
 
           <tbody>
-            {devices.map((d) => (
+            {visibleDevices.map((d) => (
               <tr key={d.id} className="border-t align-top">
                 <td className="p-3 min-w-[220px]">
                   <div className="font-medium">{d.profile?.email || "-"}</div>
@@ -260,39 +312,49 @@ export default function AdminDeviceApproval() {
                 </td>
 
                 <td className="p-3 min-w-[260px]">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      disabled={actionLoading === d.id}
-                      onClick={() => handleAction(d.id, "approve")}
-                      className="px-3 py-2 rounded-xl border bg-green-500 text-white hover:bg-green-600 transition disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
+  <div className="flex flex-wrap gap-2">
+    {d.status === "pending" && (
+      <>
+        <button
+          disabled={actionLoading === d.id}
+          onClick={() => handleAction(d.id, "approve")}
+          className="px-3 py-2 rounded-xl border bg-green-500 text-white hover:bg-green-600 transition disabled:opacity-50"
+        >
+          Approve
+        </button>
 
-                    <button
-                      disabled={actionLoading === d.id}
-                      onClick={() => handleAction(d.id, "reject")}
-                      className="px-3 py-2 rounded-xl border bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
+        <button
+          disabled={actionLoading === d.id}
+          onClick={() => handleAction(d.id, "reject")}
+          className="px-3 py-2 rounded-xl border bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-50"
+        >
+          Reject
+        </button>
+      </>
+    )}
 
-                    <button
-                      disabled={actionLoading === d.id}
-                      onClick={() => handleAction(d.id, "revoke")}
-                      className="px-3 py-2 rounded-xl border bg-black text-white hover:opacity-80 transition disabled:opacity-50"
-                    >
-                      Revoke
-                    </button>
-                  </div>
-                </td>
+    {d.status === "approved" && (
+      <button
+        disabled={actionLoading === d.id}
+        onClick={() => handleAction(d.id, "revoke")}
+        className="px-3 py-2 rounded-xl border bg-black text-white hover:opacity-80 transition disabled:opacity-50"
+      >
+        Revoke
+      </button>
+    )}
+
+    {d.status === "rejected" && (
+      <span className="text-xs text-gray-400">No action</span>
+    )}
+  </div>
+</td>
               </tr>
             ))}
 
-            {!devices.length && (
+            {!visibleDevices.length && (
               <tr>
                 <td colSpan={15} className="p-8 text-center text-gray-500">
-                  No devices found.
+                  No {activeTab === "all" ? "" : activeTab} devices found.
                 </td>
               </tr>
             )}
