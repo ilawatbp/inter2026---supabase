@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import logo from "../assets/logo.png";
 import lamp from "../assets/bg-lamp.png";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { getDeviceInfo } from "../utils/device";
@@ -13,14 +13,15 @@ export default function Login() {
 
   const from = location.state?.from?.pathname || "/";
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [otp, setOtp] = useState("");
   const [otpStep, setOtpStep] = useState(false);
   const [otpMaskedEmail, setOtpMaskedEmail] = useState("");
+
+  const [deviceLabel, setDeviceLabel] = useState("");
+  const [deviceOwnerName, setDeviceOwnerName] = useState("");
+  const [devicePurpose, setDevicePurpose] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,26 +29,13 @@ export default function Login() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
-    if (session && otpPending) {
-      setOtpStep(true);
-    }
+    if (session && otpPending) setOtpStep(true);
   }, [session, otpPending]);
-
-  if (session && !otpPending && !otpStep && !authFlowInProgress) {
-    return <Navigate to="/" replace />;
-  }
 
   function handleChange(e) {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errorMsg) {
-      setErrorMsg("");
-    }
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errorMsg) setErrorMsg("");
   }
 
   async function handleSubmit(e) {
@@ -106,7 +94,7 @@ export default function Login() {
         return;
       }
 
-      if (result.trusted) {
+      if (result.trusted === true && result.device_approved === true) {
         setOtpPending(false);
         setOtpStep(false);
         setAuthFlowInProgress(false);
@@ -114,11 +102,20 @@ export default function Login() {
         return;
       }
 
-      if (result.otp_required) {
+      if (result.otp_required === true) {
         setOtpPending(true);
         setOtpStep(true);
         setOtpMaskedEmail(result.branch_email_masked || "");
         setAuthFlowInProgress(false);
+        return;
+      }
+
+      if (result.reason === "DEVICE_PENDING_APPROVAL") {
+        setOtpPending(false);
+        setOtpStep(false);
+        setAuthFlowInProgress(false);
+        setErrorMsg(result.message || "This device is waiting for admin approval.");
+        await supabase.auth.signOut();
         return;
       }
 
@@ -138,6 +135,21 @@ export default function Login() {
 
     if (!otp.trim()) {
       setErrorMsg("Please enter the OTP.");
+      return;
+    }
+
+    if (!deviceLabel.trim()) {
+      setErrorMsg("Please enter a device label.");
+      return;
+    }
+
+    if (!deviceOwnerName.trim()) {
+      setErrorMsg("Please enter the device owner name.");
+      return;
+    }
+
+    if (!devicePurpose.trim()) {
+      setErrorMsg("Please enter the device purpose.");
       return;
     }
 
@@ -193,7 +205,7 @@ export default function Login() {
 
       try {
         coords = await getBrowserLocation();
-      } catch (geoErr) {
+      } catch {
         await supabase.auth.signOut();
 
         setOtpPending(false);
@@ -220,6 +232,9 @@ export default function Login() {
             device_id: deviceInfo.device_id,
             latitude: coords.latitude,
             longitude: coords.longitude,
+            device_label: deviceLabel.trim(),
+            device_owner_name: deviceOwnerName.trim(),
+            device_purpose: devicePurpose.trim(),
           }),
         }
       );
@@ -227,16 +242,31 @@ export default function Login() {
       const finalizeResult = await finalizeRes.json();
 
       if (!finalizeRes.ok) {
-        setErrorMsg(finalizeResult.error || "Failed to save location.");
+        setErrorMsg(finalizeResult.error || "Failed to save device verification.");
         return;
       }
 
       if (finalizeResult.success) {
         setOtpPending(false);
         setOtpStep(false);
+        setAuthFlowInProgress(false);
         setOtp("");
         setOtpMaskedEmail("");
-        navigate(from, { replace: true });
+        setDeviceLabel("");
+        setDeviceOwnerName("");
+        setDevicePurpose("");
+
+        if (finalizeResult.admin_auto_approved === true) {
+          navigate("/", { replace: true });
+          return;
+        }
+
+        await supabase.auth.signOut();
+
+        setErrorMsg(
+          "Device verification completed. Please wait for admin approval before logging in."
+        );
+
         return;
       }
 
@@ -264,9 +294,7 @@ export default function Login() {
             longitude: position.coords.longitude,
           });
         },
-        (error) => {
-          reject(error);
-        },
+        (error) => reject(error),
         {
           enableHighAccuracy: true,
           timeout: 15000,
@@ -284,10 +312,10 @@ export default function Login() {
     setAuthFlowInProgress(false);
     setOtp("");
     setOtpMaskedEmail("");
-    setForm({
-      email: "",
-      password: "",
-    });
+    setDeviceLabel("");
+    setDeviceOwnerName("");
+    setDevicePurpose("");
+    setForm({ email: "", password: "" });
     setErrorMsg("");
   }
 
@@ -312,9 +340,7 @@ export default function Login() {
 
             <p className="text-sm text-gray-500 mt-2">
               {otpStep
-                ? `Enter the OTP sent to ${
-                    otpMaskedEmail || "your branch email"
-                  }`
+                ? `Enter the OTP sent to ${otpMaskedEmail || "your branch email"}`
                 : "Sign in to continue to Interactive"}
             </p>
           </div>
@@ -349,28 +375,17 @@ export default function Login() {
                   Password
                 </label>
 
-                <div className="relative">
-                  <input
-                    id="password"
-                    name="password"
-                    className="px-5 py-4 pr-20 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={form.password}
-                    onChange={handleChange}
-                    disabled={loading}
-                    autoComplete="current-password"
-                  />
-
-                  {/* <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 hover:text-black"
-                    disabled={loading}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button> */}
-                </div>
+                <input
+                  id="password"
+                  name="password"
+                  className="px-5 py-4 pr-20 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={handleChange}
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
               </div>
 
               {errorMsg && (
@@ -382,12 +397,11 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out
-                  ${
-                    loading
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
-                  }`}
+                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out ${
+                  loading
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
+                }`}
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
@@ -395,14 +409,13 @@ export default function Login() {
           ) : (
             <form
               onSubmit={handleVerifyOtp}
-              className="border border-black rounded-3xl px-6 sm:px-8 py-8 sm:py-10 flex flex-col gap-4 bg-white/90 backdrop-blur-sm min-h-[460px]"
+              className="border border-black rounded-3xl px-6 sm:px-8 py-8 sm:py-10 flex flex-col gap-4 bg-white/90 backdrop-blur-sm"
             >
               <p className="mr-auto text-sm text-gray-600">Interactive</p>
 
               <div className="rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-                This is a new device. After OTP verification, you must allow
-                location access to continue. If you deny location, you will be
-                returned to the login page.
+                This is a new device. Please verify OTP, allow location, and
+                identify this device before it can be approved.
               </div>
 
               <div className="flex flex-col gap-2">
@@ -428,6 +441,63 @@ export default function Login() {
                 />
               </div>
 
+              <div className="flex flex-col gap-2">
+                <label htmlFor="deviceLabel" className="text-sm font-medium">
+                  Device Label
+                </label>
+
+                <input
+                  id="deviceLabel"
+                  className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type="text"
+                  placeholder="Example: Samsung s10"
+                  value={deviceLabel}
+                  onChange={(e) => {
+                    setDeviceLabel(e.target.value);
+                    if (errorMsg) setErrorMsg("");
+                  }}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="deviceOwnerName" className="text-sm font-medium">
+                  Device Owner / User
+                </label>
+
+                <input
+                  id="deviceOwnerName"
+                  className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type="text"
+                  placeholder="Example: Juan Dela Cruz"
+                  value={deviceOwnerName}
+                  onChange={(e) => {
+                    setDeviceOwnerName(e.target.value);
+                    if (errorMsg) setErrorMsg("");
+                  }}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="devicePurpose" className="text-sm font-medium">
+                  Device Purpose
+                </label>
+
+                <input
+                  id="devicePurpose"
+                  className="px-5 py-4 border border-black rounded-full w-full outline-none focus:ring-2 focus:ring-black/20"
+                  type="text"
+                  placeholder="Example: Sales Quotation"
+                  value={devicePurpose}
+                  onChange={(e) => {
+                    setDevicePurpose(e.target.value);
+                    if (errorMsg) setErrorMsg("");
+                  }}
+                  disabled={loading}
+                />
+              </div>
+
               {errorMsg && (
                 <div className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
                   {errorMsg}
@@ -437,14 +507,13 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out
-                  ${
-                    loading
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
-                  }`}
+                className={`mt-auto w-full h-14 rounded-full border border-black transition-colors duration-300 ease-in-out ${
+                  loading
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : "hover:bg-[#3cb54b] hover:text-white hover:border-[#3cb54b]"
+                }`}
               >
-                {loading || geoLoading ? "Verifying..." : "Verify OTP"}
+                {loading || geoLoading ? "Verifying..." : "Verify Device"}
               </button>
 
               <button
