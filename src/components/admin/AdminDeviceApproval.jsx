@@ -220,11 +220,8 @@ export default function AdminDeviceApproval() {
               <th className="p-3">Name</th>
               <th className="p-3">Role</th>
               <th className="p-3">Branch</th>
-              <th className="p-3">Device Label</th>
-              <th className="p-3">Owner / User</th>
-              <th className="p-3">Purpose</th>
+              <th className="p-3">Log Details</th>
               <th className="p-3">Device Info</th>
-              <th className="p-3">Browser / OS</th>
               <th className="p-3">IP</th>
               <th className="p-3">Status</th>
               <th className="p-3">Approved</th>
@@ -254,28 +251,22 @@ export default function AdminDeviceApproval() {
                   {d.profile?.branches?.branch_name || "-"}
                 </td>
 
-                <td className="p-3 min-w-[180px] font-medium">
-                  {d.device_label || "-"}
+                <td className="p-3 min-w-[180px]">
+                  <div className="flex flex-col">
+                    <p><span className="font-medium">Device Label:</span> {d.device_label || "-"}</p>
+                    <p><span className="font-medium">Owner:</span> {d.device_owner_name || "-"}</p>
+                    <p><span className="font-medium">Purpose:</span> {d.device_purpose || "-"}</p>
+
+                  </div>
+
                 </td>
 
-                <td className="p-3 min-w-[160px]">
-                  {d.device_owner_name || "-"}
-                </td>
-
-                <td className="p-3 min-w-[160px]">
-                  {d.device_purpose || "-"}
-                </td>
 
                 <td className="p-3 min-w-[220px]">
                   <div>{d.device_name || "-"}</div>
                   <div className="text-xs text-gray-400 break-all">
                     {d.device_id}
                   </div>
-                </td>
-
-                <td className="p-3 min-w-[120px]">
-                  <div>{d.browser || "-"}</div>
-                  <div className="text-xs text-gray-500">{d.os || "-"}</div>
                 </td>
 
                 <td className="p-3 min-w-[120px]">
