@@ -226,7 +226,7 @@ export default function BranchList() {
   }
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh p-6">
       <h2 className="text-xl font-semibold mb-3 text-white">Branches</h2>
 
       {msg && <p className="mb-3 text-sm text-yellow-300">{msg}</p>}
@@ -385,5 +385,5 @@ export default function BranchList() {
       </div>
     </div>
   );
-  
+
 }

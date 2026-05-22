@@ -185,7 +185,7 @@ export default function UserList() {
   }
 
   return (
-    <div className="w-full text-white">
+    <div className="w-full text-white p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">User List</h2>
         <button
@@ -402,5 +402,5 @@ export default function UserList() {
       )}
     </div>
   );
-  
+
 }

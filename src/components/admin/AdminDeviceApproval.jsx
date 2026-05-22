@@ -182,7 +182,7 @@ export default function AdminDeviceApproval() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="w-full flex flex-col gap-4 bg-white p-6 min-h-dvh">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold">Device Approval Management</h2>

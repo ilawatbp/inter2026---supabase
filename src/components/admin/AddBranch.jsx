@@ -240,7 +240,7 @@ export default function AddBranch() {
 
   return (
     <>
-      <form onSubmit={handleCreateBranch} className="mb-8 space-y-5">
+      <form onSubmit={handleCreateBranch} className="mb-8 space-y-5 p-6">
         <h2 className="text-xl font-semibold">Create Branch</h2>
 
         <div className="grid grid-cols-2 gap-6 text-black">

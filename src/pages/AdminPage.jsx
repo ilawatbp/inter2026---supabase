@@ -95,7 +95,7 @@ export default function AdminPage() {
       >
         <div
           className={`
-            h-full w-full rounded-2xl overflow-auto p-6 
+            h-full w-full rounded-2xl overflow-auto
           bg-[#2c2c2c]
           `}
         >
@@ -147,8 +147,8 @@ export default function AdminPage() {
           className={`
             px-6 md:px-10 pb-6 transition-all duration-300
             ${adminView === "default"
-              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
-              : "grid grid-cols-3 md:grid-cols-6 gap-3"
+              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4"
+              : "grid grid-cols-3 md:grid-cols-7 gap-3"
             }
           `}
         >

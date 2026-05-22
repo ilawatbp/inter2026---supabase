@@ -99,7 +99,7 @@ export default function AddUser() {
   }
 
   return (
-    <div className=" h-full w-full rounded-2xl overflow-auto text-white">
+    <div className=" h-full w-full rounded-2xl overflow-auto text-white p-6">
       <h2 className="text-2xl font-bold mb-6">Add User</h2>
 
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
