@@ -137,52 +137,52 @@ export default function UserList() {
     loadUsers();
   }
 
-async function handleSendPasswordReset(user) {
-  const confirmed = window.confirm(
-    `Send password reset email to ${user.email}?`
-  );
+  async function handleSendPasswordReset(user) {
+    const confirmed = window.confirm(
+      `Send password reset email to ${user.email}?`
+    );
 
-  if (!confirmed) return;
+    if (!confirmed) return;
 
-  setMsg("");
+    setMsg("");
 
-  const { data, error } = await supabase.functions.invoke(
-    "admin-send-password-reset",
-    {
-      body: {
-        email: user.email,
-      },
+    const { data, error } = await supabase.functions.invoke(
+      "admin-send-password-reset",
+      {
+        body: {
+          email: user.email,
+        },
+      }
+    );
+
+    if (error) {
+      setMsg(`Failed to send password reset: ${error.message}`);
+      return;
     }
-  );
 
-  if (error) {
-    setMsg(`Failed to send password reset: ${error.message}`);
-    return;
+    if (data?.error) {
+      setMsg(`Failed to send password reset: ${data.error}`);
+      return;
+    }
+
+    setMsg(`Password reset email sent to ${user.email}`);
   }
 
-  if (data?.error) {
-    setMsg(`Failed to send password reset: ${data.error}`);
-    return;
+
+  async function forceLogoutUser(userId) {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ force_logout: true })
+      .eq("id", userId)
+
+    if (error) {
+      console.error(error)
+      alert(error.message)
+      return
+    }
+
+    alert("User forced logout triggered.")
   }
-
-  setMsg(`Password reset email sent to ${user.email}`);
-}
-
-
-async function forceLogoutUser(userId) {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ force_logout: true })
-    .eq("id", userId)
-
-  if (error) {
-    console.error(error)
-    alert(error.message)
-    return
-  }
-
-  alert("User forced logout triggered.")
-}
 
   return (
     <div className="w-full text-white">
@@ -244,12 +244,12 @@ async function forceLogoutUser(userId) {
                       <p className="font-thin">{user.email || "-"}</p>
                     </div>
 
-                    
-                    </td>
+
+                  </td>
                   <td className="px-4 py-3"><p className="">{user.role || "-"}</p></td>
                   <td className="px-4 py-3">{user.status || "-"}</td>
                   <td className="px-4 py-3">{user.designation || "-"}</td>
-                    <td className="px-4 py-3">{user.branches.store_type || "-"}</td>
+                  <td className="px-4 py-3">{user.branches.store_type || "-"}</td>
                   <td className="px-4 py-3">
                     {user.branches?.branch_name
                       ? `${user.branches.branch_name} (${user.branches.branch_code})`

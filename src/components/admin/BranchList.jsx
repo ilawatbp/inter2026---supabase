@@ -71,11 +71,11 @@ export default function BranchList() {
       bank_accounts:
         banks.length > 0
           ? banks.map((bank) => ({
-              id: bank.id,
-              bank_name: bank.bank_name || "",
-              account_name: bank.account_name || "",
-              account_number: bank.account_number || "",
-            }))
+            id: bank.id,
+            bank_name: bank.bank_name || "",
+            account_name: bank.account_name || "",
+            account_number: bank.account_number || "",
+          }))
           : [{ ...emptyBank }],
       original_bank_ids: banks.map((bank) => bank.id),
     });

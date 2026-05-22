@@ -61,23 +61,20 @@ export default function AdminPage() {
         onClick={() => handleViewChange(viewKey)}
         className={`
           flex flex-col items-center justify-center rounded-2xl transition-all duration-300
-          ${
-            adminView === "default"
-              ? "w-full h-36 hover:bg-black/5"
-              : "w-full h-full hover:bg-black/5"
+          ${adminView === "default"
+            ? "w-full h-36 hover:bg-black/5"
+            : "w-full h-full hover:bg-black/5"
           }
           ${isActive ? "bg-black text-white" : "text-black"}
         `}
       >
         <Icon
-          className={`transition-all duration-300 ${
-            adminView === "default" ? "w-12 h-12 mb-3" : "w-7 h-7 mb-1"
-          }`}
+          className={`transition-all duration-300 ${adminView === "default" ? "w-12 h-12 mb-3" : "w-7 h-7 mb-1"
+            }`}
         />
         <span
-          className={`font-medium transition-all duration-300 ${
-            adminView === "default" ? "text-sm opacity-100" : "text-xs opacity-100"
-          }`}
+          className={`font-medium transition-all duration-300 ${adminView === "default" ? "text-sm opacity-100" : "text-xs opacity-100"
+            }`}
         >
           {label}
         </span>
@@ -90,10 +87,9 @@ export default function AdminPage() {
       <div
         className={`
           absolute inset-0 transition-all duration-300 ease-in-out
-          ${
-            show
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 translate-y-4 pointer-events-none"
+          ${show
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-4 pointer-events-none"
           }
         `}
       >
@@ -114,10 +110,9 @@ export default function AdminPage() {
       <nav
         className={`
           bg-white transition-all duration-500 ease-in-out overflow-hidden
-          ${
-            adminView === "default"
-              ? "min-h-[320px] rounded-b-none"
-              : "h-auto rounded-b-2xl"
+          ${adminView === "default"
+            ? "min-h-[320px] rounded-b-none"
+            : "h-auto rounded-b-2xl"
           }
         `}
       >
@@ -151,10 +146,9 @@ export default function AdminPage() {
         <div
           className={`
             px-6 md:px-10 pb-6 transition-all duration-300
-            ${
-              adminView === "default"
-                ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
-                : "grid grid-cols-3 md:grid-cols-6 gap-3"
+            ${adminView === "default"
+              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
+              : "grid grid-cols-3 md:grid-cols-6 gap-3"
             }
           `}
         >
