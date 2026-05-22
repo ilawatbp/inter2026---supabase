@@ -99,8 +99,8 @@ export default function AdminPage() {
       >
         <div
           className={`
-            h-full w-full rounded-2xl overflow-auto p-6
-            ${dark ? "bg-[#111827] text-white" : "bg-white text-black"}
+            h-full w-full rounded-2xl overflow-auto p-6 
+          bg-[#2c2c2c]
           `}
         >
           {children}

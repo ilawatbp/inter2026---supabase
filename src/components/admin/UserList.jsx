@@ -36,7 +36,8 @@ export default function UserList() {
         branches (
           id,
           branch_name,
-          branch_code
+          branch_code,
+          store_type
         )
       `)
       .order("fullname", { ascending: true });
@@ -203,13 +204,13 @@ async function forceLogoutUser(userId) {
 
       <div className="overflow-x-auto overflow-y-auto max-h-[70vh] rounded-xl border border-white/10">
         <table className="min-w-full text-sm">
-          <thead className="sticky top-0 bg-[#1f2937] z-10">
+          <thead className="sticky top-0 bg-[#30a740] z-10">
             <tr className="text-left border-b border-white/10">
-              <th className="px-4 py-3">Full Name</th>
-              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Full Name / User Name</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Designation</th>
+              <th className="px-4 py-3">Store Type</th>
               <th className="px-4 py-3">Branch</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
@@ -232,13 +233,23 @@ async function forceLogoutUser(userId) {
               users.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b border-white/10 hover:bg-white/5"
+                  className={`
+                    border-b  hover:bg-white/5 bg-black
+                    ${user.branches.store_type === 'company' ? "border-green-400" : "border-orange-400"}
+                    `}
                 >
-                  <td className="px-4 py-3">{user.fullname || "-"}</td>
-                  <td className="px-4 py-3">{user.email || "-"}</td>
-                  <td className="px-4 py-3">{user.role || "-"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col">
+                      <p className="font-bold text-xl">{user.fullname || "-"}</p>
+                      <p className="font-thin">{user.email || "-"}</p>
+                    </div>
+
+                    
+                    </td>
+                  <td className="px-4 py-3"><p className="">{user.role || "-"}</p></td>
                   <td className="px-4 py-3">{user.status || "-"}</td>
                   <td className="px-4 py-3">{user.designation || "-"}</td>
+                    <td className="px-4 py-3">{user.branches.store_type || "-"}</td>
                   <td className="px-4 py-3">
                     {user.branches?.branch_name
                       ? `${user.branches.branch_name} (${user.branches.branch_code})`
