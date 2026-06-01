@@ -87,6 +87,7 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
           value={Number(p.Quantity ?? 1)}
           onChange={(e) => handleChange(p.uid, "Quantity", e.target.value)}
           disabled={quoteStatus === "locked"}
+          onFocus={(e) => e.target.select()}
         />
         <p className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>{Number(p.Quantity ?? 1)}</p>
       </td>
@@ -143,6 +144,7 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
           value={Number(p.Discount ?? 0)}
           onChange={(e) => handleChange(p.uid, "Discount", e.target.value)}
           disabled={quoteStatus === "locked"}
+          onFocus={(e) => e.target.select()}
         />
         <div className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>
         {Number(p.Discount ?? 0)}%
@@ -157,6 +159,7 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
           value={Number(p.SRP ?? 0)}
           onChange={(e) => handleChange(p.uid, "SRP", e.target.value)}
           disabled={quoteStatus === "locked"}
+          onFocus={(e) => e.target.select()}
         />
         <p className={`text-center ${quoteStatus !== "locked" && "hidden"}`}>{Number(p.SRP ?? 0).toLocaleString("en-PH", {minimumFractionDigits: 2,})}</p>
       </td>

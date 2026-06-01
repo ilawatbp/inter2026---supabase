@@ -71,8 +71,7 @@ export default function CartForm({ printRef }) {
         return Math.round(total * 100) / 100;
         }else{
         const subtotal = quantity * price;
-
-        return Math.round(subtotal);
+        return subtotal
         }
 
     }
@@ -162,6 +161,7 @@ export default function CartForm({ printRef }) {
                                         onChange={(e) => handleCustomerDetailsOnchange('del_charge', e.target.value.toString())}
                                         defaultValue={Number(quoteDetails?.del_charge)}
                                         disabled={quoteStatus === "locked"}
+                                        onFocus={(e) => e.target.select()}
                                     />
                                     <p className={`px-4 font-semibold ${quoteStatus !== "locked" && "hidden"}`}>{Number(quoteDetails?.del_charge).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}</p>
 
@@ -176,6 +176,7 @@ export default function CartForm({ printRef }) {
                                         onChange={(e) => handleCustomerDetailsOnchange('ins_charge', e.target.value.toString())}
                                         defaultValue={Number(quoteDetails?.ins_charge)}
                                         disabled={quoteStatus === "locked"}
+                                        onFocus={(e) => e.target.select()}
                                     />
                                     <p className={`px-4 font-semibold ${quoteStatus !== "locked" && "hidden"}`}>{Number(quoteDetails?.ins_charge).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2, })}</p>
                                 </div>
