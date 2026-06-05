@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ShoppingBag, PhilippinePeso } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { supabase } from "../lib/supabase";
 
@@ -12,8 +13,6 @@ import ModalCart from "../components/ModalCart";
 import SkelitonCard from "../components/SkelitonCard";
 
 import { useAuth } from "../context/AuthContext";
-
-
 
 
 function getItemImageUrl(itemcode) {
@@ -135,6 +134,7 @@ export default function ItemsPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let ignore = false;
@@ -185,6 +185,7 @@ export default function ItemsPage() {
         itemcode,
         itemname,
         price,
+        is_prestige,
         promo:promo_discount (
           pm_discval
         )
@@ -224,6 +225,7 @@ export default function ItemsPage() {
       itemname,
       price,
       activeqrygroup,
+      is_prestige,
       promo:promo_discount (
         pm_discval
         )
@@ -277,7 +279,13 @@ export default function ItemsPage() {
 
   const handleOpen = useCallback((itm) => {
     setSelectedItem(itm);
-    setOpenItemModal(true);
+
+    if (!itm.is_prestige){
+      // setOpenItemModal(true);
+    }else{
+       navigate(`/product?id=${itm.itemcode}`)
+    }
+
   }, []);
 
   const handleAddToCart = useCallback((itm) => {

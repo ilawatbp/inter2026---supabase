@@ -1,7 +1,7 @@
 import Home from './pages/Home'
 import ItemsPage from './pages/ItemsPage';
 import CartPage from './components/cart/CartPage'
-import PrestigePage from './pages/PretigePage';
+import ProductPage from './pages/ProductPage';
 import Login from './pages/Login';
 import AdminPage from './pages/AdminPage';
 import UpdatePassword from './pages/UpdatePassword';
@@ -46,7 +46,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/query" element={<ItemsPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/prestige" element={<PrestigePage />} />
+          <Route path="/product" element={<ProductPage />} />
         </Route>
 
         <Route element={<AdminOnlyRoute />}>

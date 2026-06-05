@@ -30,36 +30,3 @@ const cname = subCategValue;
 
 
 
-
-
-
-
-
-
-
-
-
-    // // QUERY TO BACKEND WHEN CHOOSING CATEGORY
-    // const handleSubCategoryClick = (id) => {
-    //     navigate(`/loading`)
-
-    //     fetch(`http://192.168.1.100:3001/api/db2/items?group=${id}`) // Fetch from backend
-    //         .then((res) => res.json())
-    //         .then((data) => {
-    //             setItems(data);
-
-    //             navigate(`/items`)
-    //         })
-
-    //         .catch((err) => {
-    //             console.error("Error fetching:", err);
-    //             setView("category");
-    //         });
-
-    //     return () => {
-    //         if (timeoutId) {
-    //             clearTimeout(timeoutId);
-    //         }
-    //     };
-
-    // };

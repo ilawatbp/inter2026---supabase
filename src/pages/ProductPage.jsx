@@ -4,7 +4,7 @@ import { ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useShop } from "../context/ShopContext";
 
-export default function PrestigePage() {
+export default function ProductPage() {
     const navigate = useNavigate();
     const API_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.100:3001";
     const { cartValue } = useShop();
