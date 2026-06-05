@@ -1,45 +1,111 @@
 import ProductGallery from "../components/ProductGallery"
 import logo from "../assets/logo.png";
 import { ShoppingBag } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useShop } from "../context/ShopContext";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export default function ProductPage() {
     const navigate = useNavigate();
     const API_URL = import.meta.env.VITE_API_URL ?? "http://192.168.1.100:3001";
     const { cartValue } = useShop();
-    const product = {
-        code: "00000234",
-        title: "Aella T45 Table Lamp",
-        description:
-            "Leucos Aella T45 Table Lamp is a fusion of contemporary design and artisanal excellence. This lamp features a handblown Murano glass diffuser and metal structure. Whether adorning a bedside table or gracing a living room, the Aella T45 Table Light illuminates your home with a warm, inviting glow, while also serving as a stunning work of art.",
-        technical: [
-            { label: "Light Source", value: "LED 1*16.6W" },
-            { label: "Color Temp", value: "3000K" },
-            { label: "Lumen", value: "2624LM" },
-            {
-                label: "Diffuser",
-                value:
-                    "Alabaster w/ Brush Strike (Murano Glass), Transparent w/ White Spot (Murano Glass), White Shaded Pink (Murano Glass)",
-            },
-            {
-                label: "Structure",
-                value:
-                    "Matte Black (Metal Frame), Matte Bronze (Metal Frame), Matte White (Metal Frame)",
-            },
-            { label: "CRI", value: "≥90" },
-            { label: "Voltage", value: "AC220V (Dimmer on cord)" },
-            { label: "IP Rating", value: "IP20" },
-            { label: "Dimension", value: "Ø450*H:4060mm(max)" },
-            { label: "Weight", value: "8.3kg" },
-        ],
-    };
 
+    const [searchParams] = useSearchParams();
+    const selectedItemCode = searchParams.get("id");
+
+    const [productDescription, setProductDescription] = useState({});
+    const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+
+
+    useEffect(()=>{
+        async function loadProduct(){
+            setIsLoading(true);
+            
+            if(!selectedItemCode){
+                setProductDescription({});
+                setIsLoading(false);
+                return;
+            }
+
+            let dbQuery = supabase
+            .from("items")
+            .select(`
+                itemcode,
+                itemname,
+                price,
+                tech_info: tech_info(
+                    long_description,
+                    short_description,
+                    color_temp,
+                    cri,
+                    diffuser,
+                    dimension,
+                    ip_rating,
+                    itemcode,
+                    light_source,
+                    lumen,
+                    structure,
+                    voltage,
+                    weight
+                )
+            `)
+            .eq("itemcode", selectedItemCode).single();
+
+            const {data, error} = await dbQuery;
+
+            if (error) {
+                setError(error.message);
+                setProductDescription({});
+                setIsLoading(false);
+                return;
+            }
+
+            setProductDescription( data || []);
+
+            setIsLoading(false);
+        }
+
+
+        loadProduct();
+        
+
+    }, [selectedItemCode])
+
+
+    function getTechInfo() {
+        const techInfo = productDescription?.tech_info?.[0] || productDescription?.tech_info || {};
+        if (techInfo.length) {
+            return [
+                { label: "Light Source", value: techInfo.light_source },
+                { label: "Color Temp", value: techInfo.color_temp },
+                { label: "Lumen", value: techInfo.lumen },
+                { label: "Diffuser", value: techInfo.diffuser },
+                { label: "Structure", value: techInfo.structure },
+                { label: "CRI", value: techInfo.cri },
+                { label: "Voltage", value: techInfo.voltage },
+                { label: "IP Rating", value: techInfo.ip_rating },
+                { label: "Dimension", value: techInfo.dimension },
+                { label: "Weight", value: techInfo.weight },
+            ];
+
+        }
+
+        return false;
+
+    }
+
+
+const product = getTechInfo();
+    
 
     return (
         <div className="bg-white">
             <div className="p-4 flex justify-between">
-                <img src={logo} alt="" className={`h-[30px] transition-all duration-300 ease-in-out`} />
+                <img src={logo} alt="" className={`h-[30px] transition-all duration-300 ease-in-out`} 
+                        onClick={()=> navigate("/home")}
+                />
                 <div className={`relative transition-all duration-300 ease-in-out`}
                     onClick={() => navigate(`/cart`)}
                 >
@@ -71,17 +137,17 @@ export default function ProductPage() {
                         <div className="mx-auto max-w-4xl p-10 md:py-14">
                             {/* CODE */}
                             <p className="text-[11px] tracking-[0.2em] text-neutral-500">
-                                CODE: <span className="font-semibold text-neutral-700">{product.code}</span>
+                                CODE: <span className="font-semibold text-neutral-700">{productDescription.itemcode}</span>
                             </p>
 
                             {/* TITLE */}
                             <h1 className="mt-3 text-4xl font-light leading-tight tracking-tight text-neutral-900 md:text-5xl">
-                                {product.title}
+                                {productDescription.itemname}
                             </h1>
 
                             {/* DESCRIPTION */}
                             <p className="mt-6 max-w-3xl tracking-tight text-base leading-7 text-neutral-700">
-                                {product.description}
+                                {productDescription.tech_info?.long_description || ""}
                             </p>
 
                             {/* SECTION */}
@@ -92,7 +158,10 @@ export default function ProductPage() {
 
                             {/* TECH LIST */}
                             <dl className="mt-6 space-y-3">
-                                {product.technical.map((row) => (
+        
+                                {product && product.map((row) => {
+                                    if (row.value || row.value !== ""){
+                                        return(
                                     <div
                                         key={row.label}
                                         className="grid grid-cols-1 gap-1 md:grid-cols-[190px_1fr]"
@@ -104,11 +173,14 @@ export default function ProductPage() {
                                             {row.value}
                                         </dd>
                                     </div>
-                                ))}
+                                )
+                                    }
+                                })}
+
                             </dl>
                         </div>
                         <div>
-                            <button>Add To Ca</button>
+                            <button>Add To Cart</button>
                         </div>
                     </div>
                 </div>

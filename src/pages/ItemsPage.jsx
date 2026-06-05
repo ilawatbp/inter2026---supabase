@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, memo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ShoppingBag, PhilippinePeso } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { supabase } from "../lib/supabase";
 
@@ -140,7 +140,7 @@ export default function ItemsPage() {
     let ignore = false;
     let timeoutId;
 
-    async function loadItems() {
+    async function loadItems() {  
       setError("");
       setIsLoading(true);
 
@@ -281,7 +281,7 @@ export default function ItemsPage() {
     setSelectedItem(itm);
 
     if (!itm.is_prestige){
-      // setOpenItemModal(true);
+      setOpenItemModal(true);
     }else{
        navigate(`/product?id=${itm.itemcode}`)
     }
