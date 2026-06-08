@@ -261,7 +261,7 @@ export default function ItemsPage() {
       setItems(data || []);
       timeoutId = setTimeout(() => {
         setIsLoading(false);
-      }, 1000);
+      }, 500);
     }
 
     loadItems();
