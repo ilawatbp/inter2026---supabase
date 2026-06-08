@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronRight, ChevronLeft} from 'lucide-react';
 
-export default function ProductGallery({ images = [], alt = "Product image" }) {
+export default function ProductGallery({ images, alt = "Product image" }) {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const [mainRef, mainApi] = useEmblaCarousel({ loop: false });
@@ -17,6 +17,7 @@ export default function ProductGallery({ images = [], alt = "Product image" }) {
         setSelectedIndex(i);
         thumbApi?.scrollTo(i);
     }, [mainApi, thumbApi]);
+    
 
     useEffect(() => {
         if (!mainApi) return;

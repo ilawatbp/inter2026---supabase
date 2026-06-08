@@ -54,6 +54,9 @@ export default function ProductPage() {
                     structure,
                     voltage,
                     weight
+                ),
+                product_images: product_images(
+                    image_url
                 )
             `)
                 .eq("itemcode", selectedItemCode).single();
@@ -98,7 +101,20 @@ export default function ProductPage() {
         { label: "Weight", value: techInfo.weight },
     ];
 
+    const productImage = productDescription.product_images;
+    console.log(productDescription.product_images)
 
+    const galleryImages =
+  productImage?.length > 0
+    ? productImage.map((img) => {
+        const { data } = supabase.storage
+          .from("prestige-images")
+          .getPublicUrl(img.image_url);
+
+        return data.publicUrl;
+      })
+    : [];
+  
     return (
         <>
             <div className="bg-white">
@@ -112,17 +128,14 @@ export default function ProductPage() {
                         <ShoppingBag className="w-5 h-5" />
                         <div className="absolute top-[-8px] right-[-8px] bg-red-500/90 h-4 w-4 rounded-full overflow-hidden text-[8px] text-white flex justify-center items-center">{cartValue.length}</div>
                     </div>
+
                 </div>
                 <div className="grid grid-cols-1 xl:grid-cols-2 h-dvh">
                     <div className="flex justify-center items-center xl:justify-end xl:pr-32 pt-20">
-                        <ProductGallery
-                            images={[
-                                `${API_URL}/images/samp1.webp`,
-                                `${API_URL}/images/samp2.webp`,
-
-                            ]}
-                            alt="asdfasdf"
-                        />
+                            <ProductGallery
+                            images={galleryImages}
+                            alt={productDescription?.itemname || "Product image"}
+                            />
                     </div>
                     <div className="flex justify-center xl:justify-start">
                         <div className="w-2/3 lg:w-5/6">
@@ -176,8 +189,8 @@ export default function ProductPage() {
                                                 hover:bg-green-400 hover:border-green-400 hover:text-white hover:shadow
                                                 transition-all duration-300 ease-in-out
                             "
-                            onClick={()=> setOpenCartModal(true)}
-                            >Add To Cart</button>
+                                    onClick={() => setOpenCartModal(true)}
+                                >Add To Cart</button>
                             </div>
                         </div>
                     </div>

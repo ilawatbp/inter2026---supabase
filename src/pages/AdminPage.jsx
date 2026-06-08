@@ -17,6 +17,7 @@ import UserList from "../components/admin/UserList";
 import ImageUploader from "../components/admin/ImageUploader";
 import AdminLoginReports from "../components/admin/AdminLoginReports";
 import AdminDeviceApproval from "../components/admin/AdminDeviceApproval";
+import AdminProductImages from "../components/admin/AdminProductImages";
 
 export default function AdminPage() {
   const { profile, signOut } = useAuth();
@@ -159,6 +160,7 @@ export default function AdminPage() {
           <MenuCard icon={UserCheck} label="Login Reports" viewKey="loginReport" />
           <MenuCard icon={ShieldCheck} label="Device Approval" viewKey="deviceApproval" />
           <MenuCard icon={Image} label="Upload Image" viewKey="imageUploader" />
+          <MenuCard icon={Image} label="Prestige Image" viewKey="imageUploaderPrestige" />
         </div>
       </nav>
 
@@ -189,6 +191,10 @@ export default function AdminPage() {
 
         <PanelWrapper show={adminView === "imageUploader"} dark={false}>
           <ImageUploader />
+        </PanelWrapper>
+
+        <PanelWrapper show={adminView === "imageUploaderPrestige"} dark={false}>
+          <AdminProductImages />
         </PanelWrapper>
 
         {adminView === "default" && (
