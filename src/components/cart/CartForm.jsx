@@ -152,7 +152,6 @@ export default function CartForm({ printRef }) {
                             }
                             </div>
                         </div>
-                        {console.log(quoteStatus)}
                         {quoteStatus === "locked" && Number(quoteDetails?.del_charge) <= 0 ?
                             "" : (
                                 <div className="flex justify-between pl-4 items-center gap-6 border-b border-black py-2 text-[10px]">

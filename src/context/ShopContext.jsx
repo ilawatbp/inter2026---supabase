@@ -12,6 +12,7 @@ export function ShopProvider({ children }) {
   const [quoteStatus, setQuoteStatus] = useState("draft");
   const [cartValue, setCartValue] = useState([]);
   const [quoteDetails, setQuoteDetails] = useState(null);
+  const [isPrintingQuote, setIsPrintingQuote] = useState(false);
 
   const [discountButtonEnable, setDiscountButtonEnable] = useState(()=> {
     const saved = localStorage.getItem("discountButtonEnable");
@@ -46,6 +47,8 @@ export function ShopProvider({ children }) {
     .toISOString()
     .split("T")[0];
 
+
+
   const defaultQuoteDetails = useMemo(
     () => ({
       Attn: "",
@@ -72,6 +75,21 @@ export function ShopProvider({ children }) {
     }),
     [todaysDate, validUntil, profile, branch]
   );
+
+//         console.log(quoteDetails?.Qdate)
+
+      useEffect(()=>{
+        console.log(quoteDetails?.Qdate)
+        console.log(isPrintingQuote)
+        
+        if (!isPrintingQuote) {
+if (quoteDetails?.Qdate !== todaysDate || quoteDetails?.validUntil !== validUntil){
+        setQuoteDetails((prev) => ({...prev, Qdate: todaysDate, validUntil: validUntil}))
+      }
+        }
+
+      }, [quoteDetails?.Qdate, quoteDetails?.validUntil]);
+      
 
   // Load cart per logged-in user
   useEffect(() => {
@@ -142,6 +160,11 @@ export function ShopProvider({ children }) {
     setQuoteDetails((prev) => ({ ...prev, [field]: value }));
   }
 
+
+
+
+
+
   return (
     <ShopContext.Provider
       value={{
@@ -160,7 +183,9 @@ export function ShopProvider({ children }) {
         rowsService,
         setRowsService,
         discountButtonEnable, 
-        setDiscountButtonEnable
+        setDiscountButtonEnable,
+        isPrintingQuote,
+        setIsPrintingQuote
       }}
     >
       {children}

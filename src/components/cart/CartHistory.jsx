@@ -10,7 +10,7 @@ export default function CartHistory({ setCartView }) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus, setDiscountButtonEnable } = useShop();
+  const { setQuoteDetails, setCartValue, setQuoteNum, setQuoteStatus, setDiscountButtonEnable, setIsPrintingQuote } = useShop();
 
   const itemsPerPage = 100;
 
@@ -246,6 +246,7 @@ export default function CartHistory({ setCartView }) {
                           className="hover:text-[#3cb54c] cursor-pointer hover:scale-125 h-4 w-4"
                           onClick={async () => {
                             await loadQuotation(q.quotation_no, false);
+                            setIsPrintingQuote(false);
                             setQuoteStatus("draft");
                             setCartView("form");
                           }}
@@ -255,6 +256,7 @@ export default function CartHistory({ setCartView }) {
                           className="hover:text-[#3cb54c] cursor-pointer hover:scale-125 h-4 w-4"
                           onClick={async () => {
                             await loadQuotation(q.quotation_no, true);
+                            setIsPrintingQuote(true);
                             setQuoteStatus("locked");
                             setCartView("form");
                           }}
