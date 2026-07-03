@@ -530,7 +530,7 @@ export default function Login() {
       </div>
 
       <h5 className="relative z-20 text-center text-xs sm:text-sm text-gray-300 pb-4">
-        version - 3.0
+        version - 3.1
       </h5>
     </div>
   );
