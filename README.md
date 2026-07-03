@@ -20,3 +20,6 @@ If you are developing a production application, we recommend using TypeScript wi
 
 version 3.1
 date on cart fixed
+
+version 3.2
+fixing change password pages

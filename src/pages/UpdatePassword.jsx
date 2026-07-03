@@ -1,18 +1,67 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function UpdatePassword() {
   const navigate = useNavigate();
 
+  const [checking, setChecking] = useState(true);
+  const [canReset, setCanReset] = useState(false);
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState("error");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkResetSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!mounted) return;
+
+      if (session) {
+        setCanReset(true);
+      }
+
+      setChecking(false);
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("AUTH EVENT:", event);
+
+      if (event === "PASSWORD_RECOVERY") {
+        setCanReset(true);
+        setChecking(false);
+        return;
+      }
+
+      if (session) {
+        setCanReset(true);
+        setChecking(false);
+      }
+    });
+
+    checkResetSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
+
     setMsg("");
+    setMsgType("error");
 
     if (!password || !confirmPassword) {
       setMsg("Please fill in both password fields.");
@@ -29,24 +78,66 @@ export default function UpdatePassword() {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
 
-    setLoading(false);
+      if (error) {
+        setMsg(error.message);
+        setMsgType("error");
+        return;
+      }
 
-    if (error) {
-      setMsg(error.message);
-      return;
+      setMsg("Password updated successfully. Redirecting to login...");
+      setMsgType("success");
+
+      await supabase.auth.signOut();
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setMsg("Something went wrong. Please try again.");
+      setMsgType("error");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    setMsg("Password updated successfully. Redirecting to login...");
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f8f8] px-4">
+        <p className="text-gray-600">Checking reset link...</p>
+      </div>
+    );
+  }
 
-    setTimeout(() => {
-      navigate("/login");
-    }, 1500);
+  if (!canReset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f8f8] px-4">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6 space-y-4 text-center">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Invalid or expired reset link
+          </h1>
+
+          <p className="text-sm text-gray-500">
+            Please request a new reset password link.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/login", { replace: true })}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -61,12 +152,17 @@ export default function UpdatePassword() {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             New Password
           </label>
+
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setMsg("");
+            }}
             className="w-full border rounded-lg px-3 py-2 outline-none"
             placeholder="Enter new password"
+            disabled={loading}
           />
         </div>
 
@@ -74,17 +170,28 @@ export default function UpdatePassword() {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Confirm New Password
           </label>
+
           <input
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setMsg("");
+            }}
             className="w-full border rounded-lg px-3 py-2 outline-none"
             placeholder="Confirm new password"
+            disabled={loading}
           />
         </div>
 
         {msg && (
-          <p className="text-sm text-center text-red-600">{msg}</p>
+          <p
+            className={`text-sm text-center ${
+              msgType === "success" ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {msg}
+          </p>
         )}
 
         <button

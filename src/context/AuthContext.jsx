@@ -6,6 +6,16 @@ const AuthContext = createContext();
 
 const OTP_PENDING_KEY = "interactive_otp_pending";
 
+function isPasswordRecoveryPage() {
+  const path = window.location.pathname.replace(/\/$/, "");
+
+  return (
+    path === "/update-password" ||
+    window.location.hash.includes("type=recovery") ||
+    window.location.search.includes("type=recovery")
+  );
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -78,8 +88,15 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+
+      // Important for reset password flow
+      if (event === "PASSWORD_RECOVERY") {
+        setOtpPending(false);
+        setDeviceChecking(false);
+        return;
+      }
 
       if (!session) {
         setProfile(null);
@@ -96,14 +113,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   // 2) Global device check whenever app starts with existing session
-  // IMPORTANT:
-  // Skip this check on /login because Login.jsx already calls start-device-check
-  // after manual password login. This prevents duplicate OTP emails.
   useEffect(() => {
     let mounted = true;
 
     async function checkDeviceOnAppStart() {
       const isLoginPage = window.location.pathname === "/login";
+      const isResetPasswordPage = isPasswordRecoveryPage();
+
+      // Important:
+      // Supabase reset password link creates a temporary recovery session.
+      // Do not run device check here, or it may redirect back to login.
+      if (isResetPasswordPage) {
+        if (mounted) {
+          setOtpPending(false);
+          setDeviceChecking(false);
+        }
+        return;
+      }
 
       if (!session?.access_token) {
         if (mounted) {
@@ -146,41 +172,37 @@ export function AuthProvider({ children }) {
           return;
         }
 
-// FULLY APPROVED DEVICE
-if (
-  result.trusted === true &&
-  result.device_approved === true
-) {
-  setOtpPending(false);
-  return;
-}
+        // FULLY APPROVED DEVICE
+        if (
+          result.trusted === true &&
+          result.device_approved === true
+        ) {
+          setOtpPending(false);
+          return;
+        }
 
-// DEVICE WAITING FOR ADMIN APPROVAL
-if (
-  result.reason === "DEVICE_PENDING_APPROVAL" ||
-  result.device_approved === false
-) {
-  setOtpPending(true);
+        // DEVICE WAITING FOR ADMIN APPROVAL
+        if (
+          result.reason === "DEVICE_PENDING_APPROVAL" ||
+          result.device_approved === false
+        ) {
+          setOtpPending(true);
 
-  // IMPORTANT:
-  // force redirect back to login
-  if (window.location.pathname !== "/login") {
-    window.location.href = "/login";
-  }
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
 
-  return;
-}
+          return;
+        }
 
-// OTP REQUIRED
-if (result.otp_required) {
-  setOtpPending(true);
-  return;
-}
+        // OTP REQUIRED
+        if (result.otp_required) {
+          setOtpPending(true);
+          return;
+        }
 
-console.error("Unexpected device check response:", result);
-setOtpPending(true);
-
-
+        console.error("Unexpected device check response:", result);
+        setOtpPending(true);
       } catch (err) {
         console.error("Device startup check error:", err);
 

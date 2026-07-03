@@ -1,6 +1,6 @@
-import Home from './pages/Home'
+import Home from './pages/Home';
 import ItemsPage from './pages/ItemsPage';
-import CartPage from './components/cart/CartPage'
+import CartPage from './components/cart/CartPage';
 import PrestigePage from './pages/PretigePage';
 import Login from './pages/Login';
 import AdminPage from './pages/AdminPage';
@@ -15,6 +15,18 @@ import RoleHomeRedirect from './routes/RoleHomeRedirect';
 import { useEffect } from 'react';
 
 function App() {
+  const isRecoveryHash =
+    window.location.hash.includes("access_token") ||
+    window.location.hash.includes("type=recovery");
+
+  const isRootPage =
+    window.location.pathname === "/" ||
+    window.location.pathname === "";
+
+  if (isRootPage && isRecoveryHash) {
+    window.location.replace(`/update-password${window.location.hash}`);
+    return null;
+  }
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -33,7 +45,6 @@ function App() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-
 
   return (
     <div className='bg-[#f8f8f8] min-h-screen'>
