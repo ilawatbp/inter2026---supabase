@@ -76,7 +76,7 @@ export default function ItemTable({ p, openDelModal, calculatePrice }) {
             e.currentTarget.onerror = null;
             e.currentTarget.src = notavail;
           }}
-          className="w-full h-full object-cover"
+          className="block w-full object-cover"
         />
       </td>
 

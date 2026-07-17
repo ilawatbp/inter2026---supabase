@@ -23,3 +23,6 @@ date on cart fixed
 
 version 3.2
 fixing change password pages
+
+version 3.2.1
+fix image cart image size on IOS devices
