@@ -26,3 +26,6 @@ fixing change password pages
 
 version 3.2.1
 fix image cart image size on IOS devices
+
+version 3.2.2
+Fixed intermittent white screen on iPad by adding safe profile loading and geolocation error handling.
