@@ -1,6 +1,6 @@
 export default function SkelitonCard(){
   return(
-    <div className="w-full h-[90dvh] px-20 pt-20 mt-20 flex gap-4 flex-wrap justify-evenly animate-pulse">
+    <div className="w-full h-[90dvh] px-20 pt-20 mt-20 flex gap-4 flex-wrap justify-evenly animate-pulse bg-[#f8f8f8]">
       {[...Array(15)].map((_,index)=>(
       <div key={index} className="h-[40%] rounded-2xl overflow-hidden flex flex-col gap-2
         w-full md:w-[calc(50%-10px)] lg:w-[calc(33%-10px)] xl:w-[calc(25%-20px)] 2xl:w-[calc(20%-20px)]
