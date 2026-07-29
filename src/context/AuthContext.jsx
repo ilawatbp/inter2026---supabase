@@ -259,6 +259,7 @@ export function AuthProvider({ children }) {
             branch_contact_no,
             company_name,
             address,
+            store_type,
             branch_bank_accounts (
               id,
               bank_name,

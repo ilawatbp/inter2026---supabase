@@ -104,7 +104,11 @@ const ItemCard = memo(function ItemCard({ itm, onOpen, onAddToCart, userProfile 
               <p>Interactive Stat: {interClass(itm.u_interactive)}</p>
             </div>
           )} */}
-          <div className={`h-1 w-1 rounded-full ${itm.promo?.pm_discval && "bg-green-300"}`}></div>
+
+
+          {userProfile?.branches?.store_type !== "franchise" && ( //this will remove the promo indicator for franchise stores. this is temporary only
+            <div className={`h-1 w-1 rounded-full ${itm.promo?.pm_discval && "bg-green-300"}`}></div>
+          )}
 
           {userProfile.role !== "viewer" && (
             <ShoppingBag
@@ -345,9 +349,14 @@ export default function ItemsPage() {
               />
 
               <div className="w-full px-2">
-                <h4 className="text-xs text-neutral-600">
-                  {selectedItem.itemcode}
-                </h4>
+                <div className="flex items-center gap-1">
+                  <h4 className="text-xs text-neutral-600">
+                    {selectedItem.itemcode}
+                  </h4>
+                  {profile?.branches?.store_type !== "franchise" && ( //this will remove the promo indicator for franchise stores. this is temporary only
+                    <div className={`h-1 w-1 rounded-full ${selectedItem.promo?.pm_discval && "bg-green-300"}`}></div>
+                  )}
+                </div>
                 <p className="text-lg font-semibold">{selectedItem.itemname}</p>
                 <div className="mt-10 flex items-center justify-center">
                   <PhilippinePeso className="h-4 w-4" />
@@ -367,11 +376,12 @@ export default function ItemsPage() {
             </div>
           )}
         </Modal>
-
+{/* {console.log(profile?.branches?.store_type)} */}
         <Modal open={openCartModal} onClose={() => setOpenCartModal(false)}>
           <ModalCart
             propshow={setOpenCartModal}
             selectedItem={selectedItem}
+            store_type = {profile?.branches?.store_type}
           ></ModalCart>
         </Modal>
       </div>

@@ -3,7 +3,7 @@ import { useShop } from "../context/ShopContext";
 import { v4 as uuidv4 } from "uuid";
 import { PhilippinePeso } from "lucide-react";
 
-export default function ModalCart({ propshow, selectedItem }) {
+export default function ModalCart({ propshow, selectedItem, store_type}) {
 
   const {setCartValue} = useShop();
 
@@ -63,7 +63,9 @@ export default function ModalCart({ propshow, selectedItem }) {
               type="number" min="0" max="100"
               className="h-10 w-full sm:w-1/2 rounded-2xl px-4 shadow-md bg-white border border-[#dfdfdf]"
               ref={discountValue}
-              defaultValue={selectedItem.promo?.pm_discval || 0}
+
+              defaultValue = {store_type !== "franchise" && selectedItem.promo?.pm_discval ? selectedItem.promo?.pm_discval : 0} //this will remove the promo indicator for franchise stores. this is temporary only
+              // defaultValue={selectedItem.promo?.pm_discval || 0}
             />
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
